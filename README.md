@@ -1,2 +1,2 @@
-# furiosa-node-labeller
-furiosa-node-labeller
+# furiosa-feature-discovery
+furiosa-feature-discovery

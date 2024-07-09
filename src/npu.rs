@@ -8,8 +8,8 @@ pub enum Family {
 impl Family {
     fn name(&self) -> &'static str {
         match self {
-            Family::Warboy => "warboy",
-            Family::Rngd => "rngd",
+            Family::Warboy => "Warboy",
+            Family::Rngd => "Rngd",
         }
     }
 

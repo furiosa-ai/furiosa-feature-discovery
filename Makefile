@@ -12,7 +12,7 @@ build:
 	cargo build --release
 
 bake: build
-	docker build --no-cache -t furiosa-feature-discovery ./target/release -f Dockerfile
+	docker build --no-cache -t ghcr.io/furiosa-ai/furiosa-feature-discovery ./target/release -f Dockerfile
 
 test:
 	cargo test

@@ -13,3 +13,6 @@ build:
 
 bake: build
 	docker build --no-cache -t furiosa-feature-discovery ./target/release -f Dockerfile
+
+test:
+	cargo test

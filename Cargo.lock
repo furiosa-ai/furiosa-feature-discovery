@@ -392,7 +392,6 @@ dependencies = [
  "log",
  "regex",
  "reqwest",
- "serde_json",
  "structopt",
  "tokio",
 ]

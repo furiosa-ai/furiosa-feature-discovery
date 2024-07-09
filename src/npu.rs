@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+#[derive(Debug, PartialEq)]
 pub enum Family {
     Warboy,
     Rngd,
@@ -71,6 +72,7 @@ fn recognize_product(arch: &str) -> std::io::Result<HwType> {
     Ok(hwtype)
 }
 
+#[derive(Debug, PartialEq)]
 pub struct NpuDevice {
     family: Family,
     hwtype: HwType,
@@ -130,5 +132,86 @@ impl NpuDevice {
             ),
         ];
         labels.into_iter().collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_npu_device_new() {
+        let device = NpuDevice::new("warboy", 1, 2, 3, "a1b2c3".to_string()).await;
+        let expected = NpuDevice {
+            family: Family::Warboy,
+            hwtype: HwType::Warboy,
+            driver_major: 1,
+            driver_minor: 2,
+            driver_patch: 3,
+            driver_metadata: "a1b2c3".to_string(),
+        };
+
+        assert!(device.is_ok());
+        assert_eq!(expected, device.unwrap());
+    }
+
+    #[test]
+    fn test_recognize_family() {
+        let family_warboy = recognize_family("warboy");
+        let family_rngd = recognize_family("rngd");
+
+        assert!(family_warboy.is_ok());
+        assert!(family_rngd.is_ok());
+
+        assert_eq!(family_warboy.unwrap(), Family::Warboy);
+        assert_eq!(family_rngd.unwrap(), Family::Rngd);
+    }
+
+    #[test]
+    fn test_recognize_product() {
+        let product_warboy = recognize_product("warboy");
+        let product_rngd = recognize_product("rngd");
+
+        assert!(product_warboy.is_ok());
+        assert!(product_rngd.is_ok());
+
+        assert_eq!(product_warboy.unwrap(), HwType::Warboy);
+        assert_eq!(product_rngd.unwrap(), HwType::Rngd);
+    }
+
+    #[test]
+    fn test_family_to_label() {
+        let family_warboy = recognize_family("warboy");
+        let family_rngd = recognize_family("rngd");
+
+        assert!(family_warboy.is_ok());
+        assert!(family_rngd.is_ok());
+
+        assert_eq!(
+            family_warboy.unwrap().to_label(),
+            ("furiosa.ai/npu.family".to_string(), "Warboy".to_string())
+        );
+        assert_eq!(
+            family_rngd.unwrap().to_label(),
+            ("furiosa.ai/npu.family".to_string(), "Rngd".to_string())
+        );
+    }
+
+    #[test]
+    fn test_hwtype_to_label() {
+        let product_warboy = recognize_product("warboy");
+        let product_rngd = recognize_product("rngd");
+
+        assert!(product_warboy.is_ok());
+        assert!(product_rngd.is_ok());
+
+        assert_eq!(
+            product_warboy.unwrap().to_label(),
+            ("furiosa.ai/npu.hwtype".to_string(), "Warboy".to_string())
+        );
+        assert_eq!(
+            product_rngd.unwrap().to_label(),
+            ("furiosa.ai/npu.hwtype".to_string(), "Rngd".to_string())
+        );
     }
 }

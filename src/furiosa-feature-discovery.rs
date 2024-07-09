@@ -182,3 +182,20 @@ fn remove_nfd(output_path: &std::path::Path) -> anyhow::Result<()> {
     fs::remove_file(output_path)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_labels_to_feature() {
+        let mut labels = BTreeMap::new();
+        labels.insert("furiosa.ai/npu.family".to_string(), "Warboy".to_string());
+        labels.insert("furiosa.ai/npu.hwtype".to_string(), "Warboy".to_string());
+
+        let feature = labels_to_feature(&labels);
+        let expected = "furiosa.ai/npu.family=Warboy\nfuriosa.ai/npu.hwtype=Warboy".to_string();
+
+        assert_eq!(expected, feature)
+    }
+}

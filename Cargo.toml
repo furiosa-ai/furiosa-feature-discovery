@@ -2,9 +2,11 @@
 name = "furiosa-feature-discovery"
 version = "0.1.0"
 edition = "2021"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1"
+ctrlc = "3.4.4"
 env_logger = "0.8.2"
 furiosa-smi-rs = { version = "0.1.0", path = "furiosa-smi-rs" }
 lazy_static = "1.4.0"
@@ -16,5 +18,5 @@ structopt = "0.3"
 tokio = { version = "0.2.13", features = ["full"] }
 
 [[bin]]
-name = "feature-discovery"
-path = "src/feature-discovery.rs"
+name = "furiosa-feature-discovery"
+path = "src/furiosa-feature-discovery.rs"

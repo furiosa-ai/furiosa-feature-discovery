@@ -1,20 +1,4 @@
 use std::collections::BTreeMap;
-// use std::io;
-// use std::io::ErrorKind::Other;
-// use std::path::PathBuf;
-
-use lazy_static::lazy_static;
-use regex::Regex;
-// use tokio::fs::DirEntry;
-// use tokio::io::ErrorKind;
-
-lazy_static! {
-    static ref U250_PATTERN: Regex =
-        Regex::new(".*\\[0700\\]: Xilinx Corporation Device \\[10ee:f10a\\].*").unwrap();
-    static ref AWS_F1: Regex =
-        Regex::new(".*\\[0580\\]: Xilinx Corporation Device \\[10ee:f10a\\].*").unwrap();
-    static ref PLDA: Regex = Regex::new(".*\\[0780\\]: PLDA Device \\[1556:1111\\].*").unwrap();
-}
 
 pub enum Family {
     Warboy,
@@ -146,21 +130,5 @@ impl NpuDevice {
             ),
         ];
         labels.into_iter().collect()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_json() {
-        let mut labels = BTreeMap::new();
-        labels.insert("furiosa.ai/npu.family", "warboy");
-        labels.insert("furiosa.ai/npu.hwtype", "Warboy");
-        assert_eq!(
-            r#"{"furiosa.ai/npu.family":"warboy","furiosa.ai/npu.hwtype":"Warboy"}"#,
-            &serde_json::to_string(&labels).unwrap()
-        );
     }
 }

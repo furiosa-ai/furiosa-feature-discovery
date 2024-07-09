@@ -1,9 +1,10 @@
 use std::collections::BTreeMap;
+use std::fs::File;
 /// This command will be running in all nodes to detect Furiosa AI's NPU devices in Host machine.
 /// It labels Kubernetes Nodes with properties obtained from detected Furiosa AI's NPU devices.
-use std::fs;
+use std::fs::{create_dir_all, remove_file};
 use std::io::Write;
-use std::path;
+use std::path::Path;
 use std::time::Duration;
 
 use structopt::StructOpt;
@@ -54,10 +55,7 @@ fn labels_to_feature(map: &BTreeMap<String, String>) -> String {
         .join("\n")
 }
 
-async fn write_node_labels(
-    devices: Vec<NpuDevice>,
-    output_path: &path::Path,
-) -> anyhow::Result<()> {
+async fn write_node_labels(devices: Vec<NpuDevice>, output_path: &Path) -> anyhow::Result<()> {
     if !devices.is_empty() {
         let device_count = devices.len();
 
@@ -84,14 +82,14 @@ async fn write_node_labels(
                 )))
             }
         };
-        std::fs::create_dir_all(parent_dir)?;
+        create_dir_all(parent_dir)?;
 
-        let mut output_file = fs::File::create(output_path)?;
+        let mut output_file = File::create(output_path)?;
         output_file.write_all(nfd.as_bytes())?;
-        Ok(())
     } else {
-        Ok(())
+        log::info!("No devices found.");
     }
+    Ok(())
 }
 
 async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
@@ -118,7 +116,7 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
         .await
         {
             Ok(device) => found.push(device),
-            Err(e) => log::error!("fail to recognize device: {}", e),
+            Err(e) => log::error!("Failed to recognize device: {}", e),
         };
     }
     log::trace!("Found {} NPU devices", devices.len());
@@ -129,9 +127,9 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
-    log::info!("furiosa-eature-discovery has started");
+    log::info!("furiosa-feature-discovery has started");
     defer! {
-        log::info!("furiosa-eature-discovery has finished")
+        log::info!("furiosa-feature-discovery has finished")
     }
 
     let args = Cli::from_args();
@@ -139,16 +137,13 @@ async fn main() -> anyhow::Result<()> {
     let interval = time::interval(Duration::from_secs(args.interval));
 
     let output = args.output;
-    let output_path = path::Path::new(&output);
+    let output_path = Path::new(&output);
     log::info!("Writing labels to output file {}", output);
 
     run_loop(output_path, interval).await
 }
 
-async fn run_loop(
-    output_path: &std::path::Path,
-    mut interval: tokio::time::Interval,
-) -> anyhow::Result<()> {
+async fn run_loop(output_path: &Path, mut interval: time::Interval) -> anyhow::Result<()> {
     defer! {
         let _ = remove_nfd(output_path);
     }
@@ -178,8 +173,8 @@ async fn run_loop(
     Ok(())
 }
 
-fn remove_nfd(output_path: &std::path::Path) -> anyhow::Result<()> {
-    fs::remove_file(output_path)?;
+fn remove_nfd(output_path: &Path) -> anyhow::Result<()> {
+    remove_file(output_path)?;
     Ok(())
 }
 

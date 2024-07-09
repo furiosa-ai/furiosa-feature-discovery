@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::io::{Error, ErrorKind, Result};
 
 #[derive(Debug, PartialEq)]
 pub enum Family {
@@ -42,13 +43,13 @@ impl HwType {
     }
 }
 
-fn recognize_family(arch: &str) -> std::io::Result<Family> {
+fn recognize_family(arch: &str) -> Result<Family> {
     let family = match arch {
         "warboy" => Family::Warboy,
         "rngd" | "rngd_s" | "rngd_max" => Family::Rngd,
         _ => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(Error::new(
+                ErrorKind::Other,
                 format!("Unknown Arch: {}", arch),
             ))
         }
@@ -56,15 +57,15 @@ fn recognize_family(arch: &str) -> std::io::Result<Family> {
     Ok(family)
 }
 
-fn recognize_product(arch: &str) -> std::io::Result<HwType> {
+fn recognize_product(arch: &str) -> Result<HwType> {
     let hwtype = match arch {
         "warboy" => HwType::Warboy,
         "rngd" => HwType::Rngd,
         "rngd_s" => HwType::RngdS,
         "rngd_max" => HwType::RngdMax,
         _ => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(Error::new(
+                ErrorKind::Other,
                 format!("Unknown Arch: {}", arch),
             ))
         }
@@ -89,7 +90,7 @@ impl NpuDevice {
         driver_minor: u32,
         driver_patch: u32,
         driver_metadata: String,
-    ) -> std::io::Result<NpuDevice> {
+    ) -> Result<NpuDevice> {
         let family = recognize_family(arch)?;
         let hwtype = recognize_product(arch)?;
 

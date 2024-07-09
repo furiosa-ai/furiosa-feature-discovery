@@ -43,7 +43,7 @@ struct Cli {
     /// Interval secs to update node labels
     #[structopt(long, default_value = "60")]
     interval: u64,
-    #[structopt(default_value = "/etc/kubernetes/node-feature-discovery/features.d/nfd")]
+    #[structopt(default_value = "/etc/kubernetes/node-feature-discovery/features.d/ffd")]
     output: String,
 }
 

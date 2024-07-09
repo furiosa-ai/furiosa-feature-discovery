@@ -6,13 +6,9 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
-ctrlc = "3.4.4"
 env_logger = "0.8.2"
 furiosa-smi-rs = { version = "0.1.0", path = "furiosa-smi-rs" }
-lazy_static = "1.4.0"
 log = "0.4.11"
-regex = "1"
-reqwest = { version = "0.10", features = ["json"] }
 structopt = "0.3"
 tokio = { version = "0.2.13", features = ["full"] }
 

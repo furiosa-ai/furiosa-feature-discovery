@@ -32,7 +32,7 @@ spec:
       imagePullSecrets:
         - name: ecr-docker-login
       containers:
-        - image: ghcr.io/furiosa-ai/furiosa-feature-discovery:latest
+      - image: ghcr.io/furiosa-ai/furiosa-feature-discovery:latest
         name: furiosa-feature-discovery
         imagePullPolicy: IfNotPresent
         workingDir: /opt/bin

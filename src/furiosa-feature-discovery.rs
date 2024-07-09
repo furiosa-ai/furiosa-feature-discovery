@@ -92,6 +92,45 @@ async fn write_node_labels(devices: Vec<NpuDevice>, output_path: &Path) -> anyho
     Ok(())
 }
 
+fn remove_nfd(output_path: &Path) -> anyhow::Result<()> {
+    remove_file(output_path)?;
+    Ok(())
+}
+
+async fn run_loop(output_path: &Path, mut interval: time::Interval) -> anyhow::Result<()> {
+    defer! {
+        let _ = remove_nfd(output_path);
+    }
+
+    log::info!("Start to write labels");
+
+    let mut sigterm = signal(SignalKind::terminate())?;
+    let mut sigint = signal(SignalKind::interrupt())?;
+    let mut sigquit = signal(SignalKind::quit())?;
+
+    loop {
+        tokio::select! {
+            _ = sigterm.recv() => {log::trace!("SIGTERM Shuting down"); break},
+            _ = sigint.recv() => {log::trace!("SIGINT Shuting down"); break},
+            _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
+            _ = interval.tick() => {
+                log::info!("Start to detect npu devices");
+
+                let detected = match detect_npu_devices().await {
+                    Ok(dev) => dev,
+                    Err(e) => {log::error!("Failed to get device information: {}", e); break},
+                };
+
+                match write_node_labels(detected, output_path).await {
+                    Ok(()) => {}
+                    Err(e) => {log::error!("Failed to write node labels: {}", e); break},
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
     let mut found = vec![];
 
@@ -119,7 +158,9 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
             Err(e) => log::error!("Failed to recognize device: {}", e),
         };
     }
+
     log::trace!("Found {} NPU devices", devices.len());
+
     Ok(found)
 }
 
@@ -128,6 +169,7 @@ async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     log::info!("furiosa-feature-discovery has started");
+
     defer! {
         log::info!("furiosa-feature-discovery has finished")
     }
@@ -138,44 +180,10 @@ async fn main() -> anyhow::Result<()> {
 
     let output = args.output;
     let output_path = Path::new(&output);
+
     log::info!("Writing labels to output file {}", output);
 
     run_loop(output_path, interval).await
-}
-
-async fn run_loop(output_path: &Path, mut interval: time::Interval) -> anyhow::Result<()> {
-    defer! {
-        let _ = remove_nfd(output_path);
-    }
-    log::info!("Start to write labels");
-    let mut sigterm = signal(SignalKind::terminate())?;
-    let mut sigint = signal(SignalKind::interrupt())?;
-    let mut sigquit = signal(SignalKind::quit())?;
-
-    loop {
-        tokio::select! {
-            _ = sigterm.recv() => {log::trace!("SIGTERM Shuting down"); break},
-            _ = sigint.recv() => {log::trace!("SIGINT Shuting down"); break},
-            _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
-            _ = interval.tick() => {
-                log::info!("Start to detect npu devices");
-                let detected = match detect_npu_devices().await {
-                    Ok(dev) => dev,
-                    Err(e) => {log::error!("Failed to get device information: {}", e); break},
-                };
-                match write_node_labels(detected, output_path).await {
-                    Ok(()) => {}
-                    Err(e) => {log::error!("Failed to write node labels: {}", e); break},
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-fn remove_nfd(output_path: &Path) -> anyhow::Result<()> {
-    remove_file(output_path)?;
-    Ok(())
 }
 
 #[cfg(test)]

@@ -39,7 +39,7 @@ spec:
         command: ["./furiosa-feature-discovery"]
         args: [
           # Default interval is 60 secs
-          "--interval", "10"
+          "--interval", "60"
         ]
         env:
           - name: K8S_NODE_NAME

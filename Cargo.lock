@@ -352,6 +352,7 @@ dependencies = [
  "furiosa-smi-rs",
  "log",
  "structopt",
+ "tempfile",
  "tokio",
 ]
 

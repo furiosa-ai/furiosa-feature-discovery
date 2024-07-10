@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::fs::File;
 /// This command will be running in all nodes to detect Furiosa AI's NPU devices in Host machine.
 /// It labels Kubernetes Nodes with properties obtained from detected Furiosa AI's NPU devices.
 use std::fs::{create_dir_all, remove_file};
@@ -8,6 +7,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use structopt::StructOpt;
+use tempfile::Builder;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time;
 
@@ -20,7 +20,10 @@ struct Cli {
     /// Interval secs to update node labels
     #[structopt(long, default_value = "60")]
     interval: u64,
-    #[structopt(default_value = "/etc/kubernetes/node-feature-discovery/features.d/ffd")]
+    #[structopt(
+        long,
+        default_value = "/etc/kubernetes/node-feature-discovery/features.d/ffd"
+    )]
     output: String,
 }
 
@@ -61,16 +64,41 @@ async fn write_node_labels(devices: Vec<NpuDevice>, output_path: &Path) -> anyho
         };
         create_dir_all(parent_dir)?;
 
-        let mut output_file = File::create(output_path)?;
-        output_file.write_all(nfd.as_bytes())?;
+        let output_filename = match output_path.file_name() {
+            Some(filename) => match filename.to_str() {
+                Some(str) => str,
+                None => {
+                    return Err(anyhow::Error::msg(format!(
+                        "failed to get filename of output file {}",
+                        output_path.display()
+                    )))
+                }
+            },
+            None => {
+                return Err(anyhow::Error::msg(format!(
+                    "failed to get filename of output file {}",
+                    output_path.display()
+                )))
+            }
+        };
+
+        let mut temp_file = Builder::new()
+            .prefix(&format!(".{}-", output_filename))
+            .tempfile_in(parent_dir)?;
+
+        temp_file.write_all(nfd.as_bytes())?;
+
+        std::fs::rename(temp_file, output_path)?;
     } else {
         log::info!("No devices found.");
     }
     Ok(())
 }
 
-fn remove_nfd(output_path: &Path) -> anyhow::Result<()> {
-    remove_file(output_path)?;
+fn remove_ffd(output_path: &Path) -> anyhow::Result<()> {
+    if output_path.is_file() {
+        remove_file(output_path)?;
+    }
     Ok(())
 }
 
@@ -104,7 +132,7 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
         }
     }
 
-    remove_nfd(output_path);
+    remove_ffd(output_path)?;
 
     Ok(())
 }

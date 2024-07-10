@@ -198,10 +198,10 @@ mod tests {
     fn test_labels_to_feature() {
         let mut labels = BTreeMap::new();
         labels.insert("furiosa.ai/npu.family".to_string(), "Warboy".to_string());
-        labels.insert("furiosa.ai/npu.hwtype".to_string(), "Warboy".to_string());
+        labels.insert("furiosa.ai/npu.product".to_string(), "Warboy".to_string());
 
         let feature = labels_to_feature(&labels);
-        let expected = "furiosa.ai/npu.family=Warboy\nfuriosa.ai/npu.hwtype=Warboy".to_string();
+        let expected = "furiosa.ai/npu.family=Warboy\nfuriosa.ai/npu.product=Warboy".to_string();
 
         assert_eq!(expected, feature)
     }

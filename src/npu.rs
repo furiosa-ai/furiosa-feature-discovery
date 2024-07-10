@@ -3,8 +3,8 @@ use std::io::{Error, ErrorKind, Result};
 
 fn recognize_family(arch: &str) -> Result<String> {
     let family = match arch {
-        "warboy" => "Warboy",
-        "rngd" | "rngd_s" | "rngd_max" => "Rngd",
+        "warboy" => "warboy",
+        "rngd" | "rngd_s" | "rngd_max" => "rngd",
         _ => {
             return Err(Error::new(
                 ErrorKind::Other,
@@ -17,20 +17,7 @@ fn recognize_family(arch: &str) -> Result<String> {
 }
 
 fn recognize_product(arch: &str) -> Result<String> {
-    let product = match arch {
-        "warboy" => "Warboy",
-        "rngd" => "Rngd",
-        "rngd_s" => "RngdS",
-        "rngd_max" => "RngdMax",
-        _ => {
-            return Err(Error::new(
-                ErrorKind::Other,
-                format!("Unknown Arch: {}", arch),
-            ))
-        }
-    }
-    .to_string();
-    Ok(product)
+    Ok(arch.to_string())
 }
 
 #[derive(Debug, PartialEq)]

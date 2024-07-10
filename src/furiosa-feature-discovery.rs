@@ -15,29 +15,6 @@ use crate::npu::NpuDevice;
 
 mod npu;
 
-macro_rules! expr {
-    ($e: expr) => {
-        $e
-    };
-}
-
-macro_rules! defer {
-    ($($data: tt)*) => (
-        let _scope_call = ScopeCall {
-            c: || -> () { expr!({ $($data)* }) }
-        };
-    )
-}
-
-struct ScopeCall<F: FnMut()> {
-    c: F,
-}
-impl<F: FnMut()> Drop for ScopeCall<F> {
-    fn drop(&mut self) {
-        (self.c)();
-    }
-}
-
 #[derive(Debug, StructOpt)]
 struct Cli {
     /// Interval secs to update node labels
@@ -97,16 +74,14 @@ fn remove_nfd(output_path: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_loop(output_path: &Path, mut interval: time::Interval) -> anyhow::Result<()> {
-    defer! {
-        let _ = remove_nfd(output_path);
-    }
-
+async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
     log::info!("Start to write labels");
 
     let mut sigterm = signal(SignalKind::terminate())?;
     let mut sigint = signal(SignalKind::interrupt())?;
     let mut sigquit = signal(SignalKind::quit())?;
+
+    let mut interval = time::interval(Duration::from_secs(interval));
 
     loop {
         tokio::select! {
@@ -128,6 +103,9 @@ async fn run_loop(output_path: &Path, mut interval: time::Interval) -> anyhow::R
             }
         }
     }
+
+    remove_nfd(output_path);
+
     Ok(())
 }
 
@@ -170,20 +148,18 @@ async fn main() -> anyhow::Result<()> {
 
     log::info!("furiosa-feature-discovery has started");
 
-    defer! {
-        log::info!("furiosa-feature-discovery has finished")
-    }
-
     let args = Cli::from_args();
-
-    let interval = time::interval(Duration::from_secs(args.interval));
 
     let output = args.output;
     let output_path = Path::new(&output);
 
     log::info!("Writing labels to output file {}", output);
 
-    run_loop(output_path, interval).await
+    run_loop(output_path, args.interval).await?;
+
+    log::info!("furiosa-feature-discovery has finished");
+
+    Ok(())
 }
 
 #[cfg(test)]

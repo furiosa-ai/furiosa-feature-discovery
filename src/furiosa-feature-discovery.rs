@@ -35,7 +35,8 @@ fn labels_to_feature(map: &BTreeMap<String, String>) -> String {
         .join("\n")
 }
 
-async fn write_node_labels(devices: Vec<NpuDevice>, output_path: &Path) -> anyhow::Result<()> {
+async fn extract_labels(devices: Vec<NpuDevice>) -> anyhow::Result<BTreeMap<String, String>> {
+    log::info!("Start to extract node labels");
     if !devices.is_empty() {
         let device_count = devices.len();
 
@@ -49,9 +50,24 @@ async fn write_node_labels(devices: Vec<NpuDevice>, output_path: &Path) -> anyho
 
         labels.insert("furiosa.ai/npu.count".to_string(), device_count.to_string());
 
+        log::info!("Successfully extract node labels");
+
+        Ok(labels)
+    } else {
+        log::info!("No devices found");
+        Ok(BTreeMap::new())
+    }
+}
+
+fn sync_file_atomically(
+    labels: BTreeMap<String, String>,
+    output_path: &Path,
+) -> anyhow::Result<()> {
+    if !labels.is_empty() {
+        log::info!("Writing labels to output file: {}", output_path.display());
         let nfd = labels_to_feature(&labels);
 
-        log::info!("Labels updated: \n{}", nfd);
+        log::info!("Labels updated:\n{}", nfd);
 
         let parent_dir = match output_path.parent() {
             Some(dir) => dir,
@@ -89,8 +105,10 @@ async fn write_node_labels(devices: Vec<NpuDevice>, output_path: &Path) -> anyho
         temp_file.write_all(nfd.as_bytes())?;
 
         std::fs::rename(temp_file, output_path)?;
+
+        log::info!("Successfully write node labels");
     } else {
-        log::info!("No devices found.");
+        log::info!("No labels found");
     }
     Ok(())
 }
@@ -116,28 +134,50 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
             _ = sigterm.recv() => {log::trace!("SIGTERM Shuting down"); break},
             _ = sigint.recv() => {log::trace!("SIGINT Shuting down"); break},
             _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
-            _ = interval.tick() => {
-                log::info!("Start to detect npu devices");
-
-                let detected = match detect_npu_devices().await {
-                    Ok(dev) => dev,
-                    Err(e) => {log::error!("Failed to get device information: {}", e); break},
-                };
-
-                match write_node_labels(detected, output_path).await {
-                    Ok(()) => {}
-                    Err(e) => {log::error!("Failed to write node labels: {}", e); break},
-                }
+            _ = interval.tick() => match sync_label(output_path).await {
+                Ok(()) => {},
+                Err(_) => {
+                    log::error!("Failed to write node labels");
+                    break
+                },
             }
         }
     }
 
     remove_ffd(output_path)?;
 
+    log::info!("Finish writing labels");
+
+    Ok(())
+}
+
+async fn sync_label(output_path: &Path) -> anyhow::Result<()> {
+    let detected = match detect_npu_devices().await {
+        Ok(dev) => dev,
+        Err(e) => {
+            log::error!("Failed to get device information: {}", e);
+            return Err(e);
+        }
+    };
+
+    match extract_labels(detected).await {
+        Ok(labels) => match sync_file_atomically(labels, output_path) {
+            Ok(()) => {}
+            Err(e) => {
+                log::error!("Failed to write node labels: {}", e);
+                return Err(e);
+            }
+        },
+        Err(e) => {
+            log::error!("Failed to extract node labels: {}", e);
+            return Err(e);
+        }
+    }
     Ok(())
 }
 
 async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
+    log::info!("Start to detect npu devices");
     let mut found = vec![];
 
     let devices = furiosa_smi_rs::list_devices()?;
@@ -165,7 +205,7 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
         };
     }
 
-    log::trace!("Found {} NPU devices", devices.len());
+    log::info!("Found {} NPU devices", found.len());
 
     Ok(found)
 }
@@ -180,8 +220,6 @@ async fn main() -> anyhow::Result<()> {
 
     let output = args.output;
     let output_path = Path::new(&output);
-
-    log::info!("Writing labels to output file {}", output);
 
     run_loop(output_path, args.interval).await?;
 

@@ -241,6 +241,30 @@ mod tests {
         let feature = labels_to_feature(&labels);
         let expected = "furiosa.ai/npu.family=Warboy\nfuriosa.ai/npu.product=Warboy".to_string();
 
-        assert_eq!(expected, feature)
+        assert_eq!(feature, expected)
+    }
+
+    #[tokio::test]
+    async fn test_extract_labels() {
+        let device_warboy = NpuDevice::new("warboy", 1, 2, 3, "1a2b3c".to_string())
+            .await
+            .unwrap();
+
+        let labels = extract_labels(vec![device_warboy]).await.unwrap();
+
+        let mut expected = BTreeMap::new();
+        expected.insert("furiosa.ai/driver.version".to_string(), "1.2.3".to_string());
+        expected.insert("furiosa.ai/driver.version.major".to_string(), 1.to_string());
+        expected.insert("furiosa.ai/driver.version.minor".to_string(), 2.to_string());
+        expected.insert("furiosa.ai/driver.version.patch".to_string(), 3.to_string());
+        expected.insert(
+            "furiosa.ai/driver.version.metadata".to_string(),
+            "1a2b3c".to_string(),
+        );
+        expected.insert("furiosa.ai/npu.family".to_string(), "warboy".to_string());
+        expected.insert("furiosa.ai/npu.product".to_string(), "warboy".to_string());
+        expected.insert("furiosa.ai/npu.count".to_string(), 1.to_string());
+
+        assert_eq!(labels, expected);
     }
 }

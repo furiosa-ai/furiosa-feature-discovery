@@ -91,8 +91,8 @@ mod tests {
     async fn test_npu_device_new() {
         let device = NpuDevice::new("warboy", 1, 2, 3, "a1b2c3".to_string()).await;
         let expected = NpuDevice {
-            family: "Warboy".to_string(),
-            product: "Warboy".to_string(),
+            family: "warboy".to_string(),
+            product: "warboy".to_string(),
             driver_major: 1,
             driver_minor: 2,
             driver_patch: 3,
@@ -100,7 +100,7 @@ mod tests {
         };
 
         assert!(device.is_ok());
-        assert_eq!(expected, device.unwrap());
+        assert_eq!(device.unwrap(), expected);
     }
 
     #[test]
@@ -111,8 +111,8 @@ mod tests {
         assert!(family_warboy.is_ok());
         assert!(family_rngd.is_ok());
 
-        assert_eq!(family_warboy.unwrap(), "Warboy".to_string());
-        assert_eq!(family_rngd.unwrap(), "Rngd".to_string());
+        assert_eq!(family_warboy.unwrap(), "warboy".to_string());
+        assert_eq!(family_rngd.unwrap(), "rngd".to_string());
     }
 
     #[test]
@@ -123,7 +123,7 @@ mod tests {
         assert!(product_warboy.is_ok());
         assert!(product_rngd.is_ok());
 
-        assert_eq!(product_warboy.unwrap(), "Warboy".to_string());
-        assert_eq!(product_rngd.unwrap(), "Rngd".to_string());
+        assert_eq!(product_warboy.unwrap(), "warboy".to_string());
+        assert_eq!(product_rngd.unwrap(), "rngd".to_string());
     }
 }

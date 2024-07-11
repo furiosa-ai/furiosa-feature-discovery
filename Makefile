@@ -1,3 +1,7 @@
+ifeq ($(shell uname), Linux)
+export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):/usr/local/lib
+endif
+
 all: build
 
 clean:

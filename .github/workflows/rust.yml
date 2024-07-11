@@ -1,0 +1,48 @@
+name: Rust
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: ['ubuntu-20.04', 'ubuntu-22.04', 'ubuntu-24.04']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: checkout furiosa-smi
+        uses: actions/checkout@v4
+        with:
+          repository: furiosa-ai/furiosa-smi
+          token: ${{ secrets.TOKEN_FOR_CLONE_ANOTHER_REPO}}
+          path: furiosa-smi
+      - name: install furiosa-smi
+        run: |
+          cd furiosa-smi
+          rustup component add clippy rustfmt
+          cargo build
+          make install
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TOKEN_FOR_CLONE_ANOTHER_REPO}}
+          submodules: true
+      - name: Install rust components
+        run: rustup component add clippy rustfmt
+      - name: install cargo tools
+        run: cargo install --force cargo-sort # cargo-machete
+      # - name: machete # machete is not compatible with toolchain of this repo.
+      #   run: cargo machete
+      - name: sort
+        run: cargo sort --grouped --check --workspace
+      - name: clippy
+        run: cargo fmt --all --check && cargo -q clippy --all-targets -- -D rust_2018_idioms -D warnings
+      - name: Run build
+        run: cargo build
+      - name: Run tests
+        run: make test

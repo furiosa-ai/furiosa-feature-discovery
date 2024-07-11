@@ -1,0 +1,18 @@
+[package]
+name = "furiosa-feature-discovery"
+version = "0.1.0"
+edition = "2021"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+env_logger = "0.8.2"
+furiosa-smi-rs = { version = "0.1.0", path = "furiosa-smi-rs" }
+log = "0.4.11"
+structopt = "0.3"
+tempfile = "3.10.1"
+tokio = { version = "0.2.13", features = ["full"] }
+
+[[bin]]
+name = "furiosa-feature-discovery"
+path = "src/furiosa-feature-discovery.rs"

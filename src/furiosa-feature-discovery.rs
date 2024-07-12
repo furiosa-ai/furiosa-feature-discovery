@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 /// It labels Kubernetes Nodes with properties obtained from detected Furiosa AI's NPU devices.
 use std::fs::{create_dir_all, remove_file};
 use std::io::Write;
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::time::Duration;
 
@@ -100,6 +101,7 @@ fn sync_file_atomically(
 
         let mut temp_file = Builder::new()
             .prefix(&format!(".{}-", output_filename))
+            .permissions(std::fs::Permissions::from_mode(0o644))
             .tempfile_in(parent_dir)?;
 
         temp_file.write_all(nfd.as_bytes())?;

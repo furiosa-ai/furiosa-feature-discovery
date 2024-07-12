@@ -1,0 +1,18 @@
+namespace: furiosa-feature-discovery
+
+daemonSet:
+  priorityClassName: system-node-critical
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  image:
+    repository: ghcr.io/furiosa-ai/furiosa-feature-discovery
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    cpu: 100m
+    memory: 64Mi
+
+node-feature-discovery:
+  enabled: true

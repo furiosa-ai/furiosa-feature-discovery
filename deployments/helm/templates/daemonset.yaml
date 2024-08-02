@@ -45,9 +45,9 @@ spec:
               memory: {{ .Values.daemonSet.resources.memory | default "64Mi" }}
           securityContext:
             allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-               - ALL
+            # capabilities:
+            #   drop:
+            #    - ALL
           volumeMounts:
             - name: dev
               mountPath: /dev
@@ -70,8 +70,9 @@ spec:
           hostPath:
             path: "/etc/kubernetes/node-feature-discovery/features.d/"
       {{- with .Values.daemonSet.tolerations }}
-      nodeSelector:
-        kubernetes.io/os: linux
       tolerations:
+        # add toleration as needed
+        # - key: furiosa.ai/npu
+        #   operator: Exists
         {{- toYaml . | nindent 8 }}
       {{- end }}

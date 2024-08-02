@@ -49,14 +49,3 @@ Selector labels
 app.kubernetes.io/name: {{ include "furiosa-feature-discovery.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "furiosa-feature-discovery.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "furiosa-feature-discovery.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}

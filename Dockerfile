@@ -1,4 +1,4 @@
-FROM ghcr.io/furiosa-ai/furiosa-smi:latest as smi
+FROM ghcr.io/furiosa-ai/libfuriosa-kubernetes:latest as smi
 
 FROM rust:bookworm as build
 
@@ -6,15 +6,7 @@ FROM rust:bookworm as build
 RUN apt-get update && \
     apt-get install -y \
     build-essential \
-    autoconf \
-    automake \
-    pkg-config \
-    libssl-dev \
-    libtool \
-    clang \
-    wget \
-    bzip2 \
-    sudo
+    clang
 
 COPY --from=smi /usr/lib/x86_64-linux-gnu/libfuriosa_smi.so /usr/lib/x86_64-linux-gnu/libfuriosa_smi.so
 COPY --from=smi /usr/include/furiosa/furiosa_smi.h /usr/include/furiosa/furiosa_smi.h

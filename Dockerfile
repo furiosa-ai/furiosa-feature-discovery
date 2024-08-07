@@ -18,7 +18,7 @@ COPY . /tmp
 
 RUN make build
 
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
 COPY --from=smi /usr/lib/x86_64-linux-gnu/libfuriosa_smi.so /usr/lib/x86_64-linux-gnu/libfuriosa_smi.so
 COPY --from=smi /usr/include/furiosa/furiosa_smi.h /usr/include/furiosa/furiosa_smi.h

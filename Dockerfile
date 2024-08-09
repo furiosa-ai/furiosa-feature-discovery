@@ -1,4 +1,4 @@
-FROM ghcr.io/furiosa-ai/libfuriosa-kubernetes:latest as build
+FROM registry.furiosa.ai/furiosa/libfuriosa-kubernetes:latest as build
 
 # Install Rust
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -33,7 +33,7 @@ COPY . /tmp
 
 RUN make build
 
-FROM ghcr.io/furiosa-ai/libfuriosa-kubernetes:latest
+FROM registry.furiosa.ai/furiosa/libfuriosa-kubernetes:latest
 
 COPY --from=build /tmp/target/release/furiosa-feature-discovery /opt/bin/furiosa-feature-discovery
 WORKDIR /opt/bin

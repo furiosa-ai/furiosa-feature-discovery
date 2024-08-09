@@ -1,3 +1,4 @@
 [submodule "furiosa-smi-rs"]
 	path = furiosa-smi-rs
 	url = https://github.com/furiosa-ai/furiosa-smi-rs
+	branch = main

@@ -5,7 +5,7 @@ daemonSet:
     rollingUpdate:
       maxUnavailable: 1
   image:
-    repository: registry.furiosa.ai/furiosa/furiosa-feature-discovery
+    repository: registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery
     tag: latest
     pullPolicy: IfNotPresent
   resources:

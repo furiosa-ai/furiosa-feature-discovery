@@ -14,12 +14,16 @@ submodule_update:
 clean:
 	cargo clean
 
-build:
-	submodule_init
+build: submodule_init
 	cargo build --release
 
-bake: build
-	docker build --no-cache -t registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery . -f Dockerfile
+.PHONY: image
+image:
+	docker build . -t registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery:devel --progress=plain --platform=linux/amd64
+
+.PHONY: image-no-cache
+image-no-cache:
+	docker build . --no-cache -t registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery:devel --progress=plain --platform=linux/amd64
 
 test:
 	cargo test

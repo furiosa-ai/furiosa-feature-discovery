@@ -20,7 +20,7 @@ spec:
       priorityClassName:  {{ .Values.daemonSet.priorityClassName | default "system-node-critical" }}
       containers:
         - name: {{ include "furiosa-feature-discovery.name" . }}
-          image: {{ .Values.daemonSet.image.repository | default "ghcr.io/furiosa-ai/furiosa-feature-discovery" }}:{{ .Values.daemonSet.image.tag | default "latest" }}
+          image: {{ .Values.daemonSet.image.repository | default "registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery" }}:{{ .Values.daemonSet.image.tag | default "latest" }}
           imagePullPolicy: {{ .Values.daemonSet.image.pullPolicy | default "IfNotPresent" }}
           workingDir: /opt/bin
           command: ["./furiosa-feature-discovery"]
@@ -54,6 +54,10 @@ spec:
               mountPath: /sys
             - name: features-d
               mountPath: "/etc/kubernetes/node-feature-discovery/features.d/"
+      {{- with .Values.daemonSet.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.daemonSet.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -70,8 +74,5 @@ spec:
             path: "/etc/kubernetes/node-feature-discovery/features.d/"
       {{- with .Values.daemonSet.tolerations }}
       tolerations:
-        # add toleration as needed
-        # - key: furiosa.ai/npu
-        #   operator: Exists
         {{- toYaml . | nindent 8 }}
       {{- end }}

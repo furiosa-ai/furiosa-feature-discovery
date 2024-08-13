@@ -1,7 +1,7 @@
 # Furiosa Feature Discovery
 
 ## Overview
-This repository contains Furiosa Feature Discovery implementation, which automatically labels Kubernetes nodes with NPU properties if a node has one or more NPU device.
+The Furiosa Feature Discovery is a tool that automatically labels Kubernetes nodes with NPU properties if a node has one or more NPU device.
 
 ## Labels
 The followings are the labels that the Furiosa Feature Discovery attaches and what they mean. 
@@ -45,5 +45,5 @@ spec:
     furiosa.ai/npu.product: warboy
 ```
 
-There are more options to deploy your Kubenetes application according to Node labels.
+There are more options to deploy your Kubernetes application according to Node labels.
 Please refer to [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) for more details.

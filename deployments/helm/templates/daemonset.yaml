@@ -54,6 +54,10 @@ spec:
               mountPath: /sys
             - name: features-d
               mountPath: "/etc/kubernetes/node-feature-discovery/features.d/"
+      {{- with .Values.daemonSet.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.daemonSet.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -70,8 +74,5 @@ spec:
             path: "/etc/kubernetes/node-feature-discovery/features.d/"
       {{- with .Values.daemonSet.tolerations }}
       tolerations:
-        # add toleration as needed
-        # - key: furiosa.ai/npu
-        #   operator: Exists
         {{- toYaml . | nindent 8 }}
       {{- end }}

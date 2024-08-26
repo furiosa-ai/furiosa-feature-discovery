@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y libssl-dev clang
 WORKDIR /tmp
 COPY . /tmp
 
-RUN make build
+RUN make build-no-submodule-init
 
 FROM gcr.io/distroless/base-debian12:latest
 

@@ -31,20 +31,24 @@ clean:
 build: submodule_init
 	cargo build --release
 
+.PHONY: build-no-submodule-init
+build-no-submodule-init:
+	cargo build --release
+
 .PHONY: image
-image:
+image: submodule_init
 	docker build . -t registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery:devel --progress=plain --platform=linux/amd64 --build-arg BASE_IMAGE=$(BASE_IMAGE)
 
 .PHONY: image-no-cache
-image-no-cache:
+image-no-cache: submodule_init
 	docker build . --no-cache -t registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery:devel --progress=plain --platform=linux/amd64 --build-arg BASE_IMAGE=$(BASE_IMAGE)
 
 .PHONY: image-rel
-image-rel:
+image-rel: submodule_init
 	docker build . -t registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery:latest --progress=plain --platform=linux/amd64 --build-arg BASE_IMAGE=$(BASE_IMAGE)
 
 .PHONY: image-no-cache-rel
-image-no-cache-rel:
+image-no-cache-rel: submodule_init
 	docker build . --no-cache -t registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery:latest --progress=plain --platform=linux/amd64 --build-arg BASE_IMAGE=$(BASE_IMAGE)
 
 .PHONY: test

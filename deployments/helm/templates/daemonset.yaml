@@ -26,7 +26,7 @@ spec:
           command: ["./furiosa-feature-discovery"]
           args: [
             # Default interval is 60 secs
-            "--interval", "60"
+            "--interval", "{{ .Values.daemonSet.args.interval | default "60" }}"
           ]
           env:
             - name: K8S_NODE_NAME

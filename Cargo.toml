@@ -6,13 +6,21 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
+assert_cmd = "2.0.16"
 env_logger = "0.8.2"
 furiosa-smi-rs = { version = "0.1.0", path = "furiosa-smi-rs" }
+k8s-openapi = { version = "0.22.0", features = ["v1_27"] }
+kube = "0.93.1"
 log = "0.4.11"
+rand = "0.8.5"
 structopt = "0.3"
 tempfile = "3.10.1"
-tokio = { version = "0.2.13", features = ["full"] }
+tokio = { version = "1.39.3", features = ["full"] }
 
 [[bin]]
 name = "furiosa-feature-discovery"
 path = "src/furiosa-feature-discovery.rs"
+
+[[bin]]
+name = "e2e-test"
+path = "e2e/e2e_test.rs"

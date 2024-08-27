@@ -25,6 +25,8 @@ daemonSet:
   resources:
     cpu: 100m
     memory: 64Mi
+  args:
+    interval: "60"
 
 node-feature-discovery:
   enabled: true

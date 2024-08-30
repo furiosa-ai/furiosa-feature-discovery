@@ -6,6 +6,10 @@ endif
 
 ifndef GITHUB_TOKEN
 $(error GITHUB_TOKEN is not set. Please set the GITHUB_TOKEN environment variable)
+
+ifeq ($(shell uname -s),Darwin)
+    CGO_CFLAGS := "-I/usr/local/include"
+    CGO_LDFLAGS := "-L/usr/local/lib"
 endif
 
 .PHONY: fmt
@@ -45,3 +49,9 @@ image-no-cache-rel:
 .PHONY: test
 test:
 	cargo test
+
+.PHONY:e2e-feature-discovery
+e2e-feature-discovery:
+	# build container image
+	# run e2e test framework
+	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) ginkgo ./e2e

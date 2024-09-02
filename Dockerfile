@@ -1,13 +1,17 @@
 ARG BASE_IMAGE=registry.corp.furiosa.ai/furiosa/libfuriosa-kubernetes:latest
 FROM $BASE_IMAGE as build
 
+ARG GITHUB_TOKEN
+ENV GITHUB_TOKEN=${GITHUB_TOKEN}
+RUN git config --global url."https://${GITHUB_TOKEN}:@github.com/".insteadOf "https://github.com/"
+
 RUN apt-get update && apt-get install -y libssl-dev clang
 
 # Build furiosa-feature-discovery
 WORKDIR /tmp
 COPY . /tmp
 
-RUN make build-no-submodule-init
+RUN make build
 
 FROM gcr.io/distroless/base-debian12:latest
 

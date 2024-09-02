@@ -1,10 +1,9 @@
-module example.com/m
+module github.com/furiosa-ai/furiosa-feature-discovery
 
-go 1.22.0
-
-toolchain go1.22.6
+go 1.22.6
 
 require (
+	github.com/furiosa-ai/libfuriosa-kubernetes v0.1.27-0.20240902025602-f2e406a0153c
 	github.com/mittwald/go-helm-client v0.12.13
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2

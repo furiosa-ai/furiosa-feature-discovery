@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "furiosa-feature-discovery.name" . }}
+  namespace: {{ .Values.namespace | default "kube-system" }}
   labels:
     {{- include "furiosa-feature-discovery.labels" . | nindent 4 }}
 spec:

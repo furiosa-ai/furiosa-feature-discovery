@@ -13,14 +13,40 @@ ifeq ($(shell uname -s),Darwin)
 endif
 
 .PHONY: fmt
-fmt:
+fmt: fmt-rs fmt-go
+
+.PHONY: fmt-rs
+fmt-rs:
 	cargo fmt --all
 	# cargo machete # machete is not compatible with toolchain of this repo.
 	cargo sort --grouped --workspace
 
+.PHONY: fmt-go
+fmt-go:
+	go fmt ./...
+
+.PHONY: lint
+lint: clippy lint-go
+
 .PHONY: clippy
 clippy:
 	cargo fmt --all --check && cargo -q clippy --all-targets -- -D rust_2018_idioms -D warnings
+
+.PHONY: lint-go
+lint-go:
+	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) golangci-lint run
+
+.PHONY: vet
+vet:
+	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go vet -v ./...
+
+.PHONY: tidy
+tidy:
+	go mod tidy
+
+.PHONY: vendor
+vendor:
+	go mod vendor
 
 .PHONY: clean
 clean:

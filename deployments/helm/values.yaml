@@ -1,3 +1,5 @@
+namespace: kube-system
+
 daemonSet:
   priorityClassName: system-node-critical
   updateStrategy:

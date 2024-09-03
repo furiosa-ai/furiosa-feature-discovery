@@ -13,7 +13,7 @@ ifeq ($(shell uname -s),Darwin)
     CGO_LDFLAGS := "-L/usr/local/lib"
 endif
 
-LABELS_TO_REMOVE := furiosa.ai/driver.version furiosa.ai/driver.version.major furiosa.ai/driver.version.minor furiosa.ai/driver.version.patch furiosa.ai/npu.count furiosa.ai/npu.family furiosa.ai/npu.product
+LABELS_TO_REMOVE := furiosa.ai/driver.version furiosa.ai/driver.version.major furiosa.ai/driver.version.minor furiosa.ai/driver.version.patch furiosa.ai/driver.version.metadata furiosa.ai/npu.count furiosa.ai/npu.family furiosa.ai/npu.product
 
 NODES := $(shell kubectl get nodes -o name | sed 's/node\///')
 

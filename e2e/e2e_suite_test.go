@@ -30,7 +30,7 @@ func abs(path string) string {
 }
 
 var _ = Describe("end-to-end test", func() {
-	Context("test furiosa feature discovery", func() {
+	Context("test furiosa feature discovery", Ordered, func() {
 		It("check if Furiosa label already exists", checkNodeLabel("furiosa.ai/npu.count", false))
 
 		It("delete furiosa-feature-discovery daemonset if exists", deleteDaemonSet("furiosa-feature-discovery", "kube-system"))

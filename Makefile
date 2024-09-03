@@ -6,6 +6,7 @@ endif
 
 ifndef GITHUB_TOKEN
 $(error GITHUB_TOKEN is not set. Please set the GITHUB_TOKEN environment variable)
+endif
 
 ifeq ($(shell uname -s),Darwin)
     CGO_CFLAGS := "-I/usr/local/include"

@@ -97,6 +97,6 @@ clean-labels:
 		done \
 	done
 
-.PHONY:e2e-feature-discovery
-e2e-feature-discovery: clean-labels
+.PHONY:e2e
+e2e: clean-labels
 	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) ginkgo ./e2e

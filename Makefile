@@ -12,6 +12,10 @@ ifeq ($(shell uname -s),Darwin)
     CGO_LDFLAGS := "-L/usr/local/lib"
 endif
 
+LABELS_TO_REMOVE := furiosa.ai/driver.version furiosa.ai/driver.version.major furiosa.ai/driver.version.minor furiosa.ai/driver.version.patch furiosa.ai/npu.count furiosa.ai/npu.family furiosa.ai/npu.product
+
+NODES := $(shell kubectl get nodes -o name | sed 's/node\///')
+
 .PHONY: fmt
 fmt: fmt-rs fmt-go
 
@@ -76,8 +80,22 @@ image-no-cache-rel:
 test:
 	cargo test
 
+.PHONY: clean-labels
+clean-labels:
+	@echo "Labels to remove: $(LABELS_TO_REMOVE)"
+	@for node in $(NODES); do \
+		echo "Processing node: $$node"; \
+		CURRENT_LABELS=$$(kubectl get node $$node --show-labels | grep -oP '(?<=,|^)\K[^=]+'); \
+		for label in $(LABELS_TO_REMOVE); do \
+			if echo $$CURRENT_LABELS | grep -q "$$label"; then \
+				echo "Removing label $$label from node $$node"; \
+				kubectl label node $$node $$label-; \
+			else \
+				echo "Label $$label not found on node $$node, skipping"; \
+			fi \
+		done \
+	done
+
 .PHONY:e2e-feature-discovery
-e2e-feature-discovery:
-	# build container image
-	# run e2e test framework
+e2e-feature-discovery: clean-labels
 	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) ginkgo ./e2e

@@ -73,8 +73,8 @@ func checkNodeLabel(targetLabel string, expected bool) func() {
 		Expect(len(nodeList.Items)).Should(BeNumerically(">=", 1))
 
 		for _, node := range nodeList.Items {
-			_, is_exist := node.Labels[targetLabel]
-			Expect(is_exist).Should(BeEquivalentTo(expected))
+			_, isExist := node.Labels[targetLabel]
+			Expect(isExist).Should(BeEquivalentTo(expected))
 		}
 	}
 }

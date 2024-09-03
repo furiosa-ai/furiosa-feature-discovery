@@ -1,3 +1,5 @@
+namespace: kube-system
+
 daemonSet:
   priorityClassName: system-node-critical
   updateStrategy:
@@ -22,6 +24,9 @@ daemonSet:
     repository: registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery
     tag: latest
     pullPolicy: IfNotPresent
+  # add your pull secret as needed
+  # imagePullSecrets:
+  #   - name: furiosa-login-secret
   resources:
     cpu: 100m
     memory: 64Mi

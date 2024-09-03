@@ -8,10 +8,8 @@ ifndef GITHUB_TOKEN
 $(error GITHUB_TOKEN is not set. Please set the GITHUB_TOKEN environment variable)
 endif
 
-ifeq ($(shell uname -s),Darwin)
-    CGO_CFLAGS := "-I/usr/local/include"
-    CGO_LDFLAGS := "-L/usr/local/lib"
-endif
+CGO_CFLAGS := -I/usr/local/include
+CGO_LDFLAGS := -L/usr/local/lib
 
 LABELS_TO_REMOVE := furiosa.ai/driver.version furiosa.ai/driver.version.major furiosa.ai/driver.version.minor furiosa.ai/driver.version.patch furiosa.ai/driver.version.metadata furiosa.ai/npu.count furiosa.ai/npu.family furiosa.ai/npu.product
 
@@ -39,7 +37,7 @@ clippy:
 
 .PHONY: lint-go
 lint-go:
-	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) golangci-lint run
+	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) golangci-lint run --timeout=30m
 
 .PHONY: vet
 vet:
@@ -60,6 +58,10 @@ clean:
 .PHONY: build
 build:
 	cargo build --release
+
+.PHONY: build-go
+build-go:
+	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go build ./...
 
 .PHONY: image
 image:

@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1"
 env_logger = "0.8.2"
-furiosa-smi-rs = { version = "0.1.0", path = "furiosa-smi-rs" }
+furiosa-smi-rs = { git = "https://github.com/furiosa-ai/furiosa-smi-rs", tag = "v0.0.1" }
 log = "0.4.11"
 structopt = "0.3"
 tempfile = "3.10.1"

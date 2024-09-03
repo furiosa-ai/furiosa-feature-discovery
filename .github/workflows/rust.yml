@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.TOKEN_FOR_CLONE_ANOTHER_REPO }}
 
 jobs:
   build:
@@ -29,9 +30,9 @@ jobs:
           cargo build
           make install
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.TOKEN_FOR_CLONE_ANOTHER_REPO}}
-          submodules: true
+      - name: set github credentials
+        run: |
+          git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
       - name: Install rust components
         run: rustup component add clippy rustfmt
       - name: install cargo tools

@@ -15,10 +15,6 @@ LABELS_TO_REMOVE := furiosa.ai/driver.version furiosa.ai/driver.version.major fu
 
 NODES := $(shell kubectl get nodes -o name | sed 's/node\///')
 
-E2E_TEST_IMAGE_REGISTRY := registry.corp.furiosa.ai/furiosa
-E2E_TEST_IMAGE_NAME := furiosa-feature-discovery
-E2E_TEST_IMAGE_TAG := latest
-
 .PHONY: fmt
 fmt: fmt-rs fmt-go
 

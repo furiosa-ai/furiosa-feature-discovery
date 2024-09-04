@@ -24,8 +24,6 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Display Go version
         run: go version
-      - name: build
-        run: make build-go
       - name: install golangci
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
       - name: fmt

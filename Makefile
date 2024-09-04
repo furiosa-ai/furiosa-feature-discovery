@@ -15,6 +15,10 @@ LABELS_TO_REMOVE := furiosa.ai/driver.version furiosa.ai/driver.version.major fu
 
 NODES := $(shell kubectl get nodes -o name | sed 's/node\///')
 
+E2E_TEST_IMAGE_REGISTRY := registry.corp.furiosa.ai/furiosa
+E2E_TEST_IMAGE_NAME := furiosa-feature-discovery
+E2E_TEST_IMAGE_TAG := latest
+
 .PHONY: fmt
 fmt: fmt-rs fmt-go
 
@@ -101,4 +105,4 @@ clean-labels:
 
 .PHONY:e2e
 e2e: clean-labels
-	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) ginkgo ./e2e
+	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) E2E_TEST_IMAGE_REGISTRY=$(E2E_TEST_IMAGE_REGISTRY) E2E_TEST_IMAGE_NAME=$(E2E_TEST_IMAGE_NAME) E2E_TEST_IMAGE_TAG=$(E2E_TEST_IMAGE_TAG) ginkgo ./e2e

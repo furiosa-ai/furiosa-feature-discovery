@@ -3,11 +3,12 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	framework2 "github.com/furiosa-ai/libfuriosa-kubernetes/pkg/e2e"
+	"github.com/furiosa-ai/libfuriosa-kubernetes/pkg/e2e"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -37,18 +38,30 @@ var _ = Describe("end-to-end test", func() {
 
 		It("delete node-feature-discovery daemonset if exists", deleteDaemonSet("furiosa-feature-discovery-node-feature-discovery-worker", "kube-system"))
 
-		It("deploy feature discovery helm chart", framework2.DeployHelmChart("furiosa-feature-discovery", abs("../deployments/helm"), composeValues()))
+		It("deploy feature discovery helm chart", e2e.DeployHelmChart("furiosa-feature-discovery", abs("../deployments/helm"), composeValues()))
 
 		It("wait for label update", func() { time.Sleep(120 * time.Second) })
 
 		It("check if Furiosa label is updated", checkNodeLabel("furiosa.ai/npu.count", true))
 
-		It("delete helm chart", framework2.DeleteHelmChart())
+		It("delete helm chart", e2e.DeleteHelmChart())
 	})
 })
 
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
 func composeValues() string {
-	template := `namespace: kube-system
+	imageRegistry := getEnv("E2E_TEST_IMAGE_REGISTRY", "registry.corp.furiosa.ai/furiosa")
+	imageName := getEnv("E2E_TEST_IMAGE_NAME", "furiosa-feature-discovery")
+	imageTag := getEnv("E2E_TEST_IMAGE_TAG", "latest")
+
+	template := fmt.Sprintf(`namespace: kube-system
 daemonSet:
   priorityClassName: system-node-critical
   updateStrategy:
@@ -56,19 +69,19 @@ daemonSet:
     rollingUpdate:
       maxUnavailable: 1
   image:
-    repository: registry.corp.furiosa.ai/furiosa/furiosa-feature-discovery
-    tag: latest
+    repository: %s/%s
+    tag: %s
     pullPolicy: Always
   resources:
     cpu: 100m
     memory: 64Mi
-`
+`, imageRegistry, imageName, imageTag)
 	return template
 }
 
 func checkNodeLabel(targetLabel string, expected bool) func() {
 	return func() {
-		nodeList, err := framework2.BackgroundContext().ClientSet.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+		nodeList, err := e2e.BackgroundContext().ClientSet.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 		Expect(err).To(BeNil())
 		Expect(len(nodeList.Items)).Should(BeNumerically(">=", 1))
 
@@ -81,7 +94,7 @@ func checkNodeLabel(targetLabel string, expected bool) func() {
 
 func deleteDaemonSet(targetDaemonSet string, namespace string) func() {
 	return func() {
-		err := framework2.BackgroundContext().ClientSet.AppsV1().DaemonSets(namespace).Delete(context.TODO(), targetDaemonSet, metav1.DeleteOptions{})
+		err := e2e.BackgroundContext().ClientSet.AppsV1().DaemonSets(namespace).Delete(context.TODO(), targetDaemonSet, metav1.DeleteOptions{})
 
 		if err == nil {
 			fmt.Printf("DaemonSet %s already exists. Delete it\n", targetDaemonSet)

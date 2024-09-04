@@ -40,5 +40,7 @@ jobs:
         run: make build-go
       - name: install golangci
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - name: fmt
+        run: make fmt-go
       - name: lint
         run: make lint-go

@@ -1,0 +1,45 @@
+name: Release Helm Chart on Tag
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Package Helm Chart
+        run: |
+          cd deployments/helm
+          helm package .
+
+      - name: Set Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: checkout helm-chart-test
+        uses: actions/checkout@v4
+        with:
+          repository: furiosa-ai/helm-chart-test
+          token: ${{ secrets.TOKEN_FOR_CLONE_ANOTHER_REPO}}
+          path: helm-chart-test
+      - name: Push to Private Helm Repo
+        run: |
+          mkdir -p ./helm-chart-test/furiosa-feature-discovery/charts/
+          mv deployments/helm/*.tgz ./helm-chart-test/furiosa-feature-discovery/charts/
+          cd ./helm-chart-test
+          git add .
+          git commit -m "Add furiosa-feature-discovery Helm chart for tag ${{ github.ref_name }}"
+          git push origin main:test

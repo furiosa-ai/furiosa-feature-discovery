@@ -3,7 +3,7 @@ module github.com/furiosa-ai/furiosa-feature-discovery
 go 1.23.2
 
 require (
-	github.com/furiosa-ai/libfuriosa-kubernetes v0.1.32
+	github.com/furiosa-ai/libfuriosa-kubernetes v0.1.33-0.20241106051032-cc14aa1ecd3e
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
 	k8s.io/apimachinery v0.31.2

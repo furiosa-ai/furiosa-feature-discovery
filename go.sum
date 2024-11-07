@@ -101,8 +101,8 @@ github.com/foxcpp/go-mockdns v1.1.0 h1:jI0rD8M0wuYAxL7r/ynTrCQQq0BVqfB99Vgk7Dlme
 github.com/foxcpp/go-mockdns v1.1.0/go.mod h1:IhLeSFGed3mJIAXPH2aiRQB+kqz7oqu8ld2qVbOu7Wk=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
-github.com/furiosa-ai/libfuriosa-kubernetes v0.1.33-0.20241106051032-cc14aa1ecd3e h1:1jC1DlbPs7oh22j9beqBOvM0KZxCWsO95kjQhdTZqdM=
-github.com/furiosa-ai/libfuriosa-kubernetes v0.1.33-0.20241106051032-cc14aa1ecd3e/go.mod h1:KFeoknfRQoo+fH8l92rPhEmy6EysWCVmvoo/EaDtL3w=
+github.com/furiosa-ai/libfuriosa-kubernetes v0.1.33 h1:DBXEs4FUU+MxznLHq3VAO1IqgYLwrikl813oLPRob4M=
+github.com/furiosa-ai/libfuriosa-kubernetes v0.1.33/go.mod h1:KFeoknfRQoo+fH8l92rPhEmy6EysWCVmvoo/EaDtL3w=
 github.com/fxamacker/cbor/v2 v2.7.0 h1:iM5WgngdRBanHcxugY4JySA0nk1wZorNOpTgCMedv5E=
 github.com/fxamacker/cbor/v2 v2.7.0/go.mod h1:pxXPTn3joSm21Gbwsv0w9OSA2y1HFR9qXEeXQVeNoDQ=
 github.com/go-errors/errors v1.5.1 h1:ZwEMSLRCapFLflTpT7NKaAc7ukJ8ZPEjzlxt8rPN8bk=

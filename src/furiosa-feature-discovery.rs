@@ -184,21 +184,22 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
 
     let devices = furiosa_smi_rs::list_devices()?;
 
+    let driver = furiosa_smi_rs::driver_info()?;
+    let driver_major = driver.major();
+    let driver_minor = driver.minor();
+    let driver_patch = driver.patch();
+    let driver_metadata = driver.metadata();
+
     for device in &devices {
         let device_info = device.device_info()?;
         let arch = device_info.arch().to_string();
-        let driver = device_info.driver_version();
-        let driver_major = driver.major();
-        let driver_minor = driver.minor();
-        let driver_patch = driver.patch();
-        let driver_metadata = driver.metadata();
 
         match NpuDevice::new(
             &arch,
             driver_major,
             driver_minor,
             driver_patch,
-            driver_metadata,
+            driver_metadata.clone(),
         )
         .await
         {

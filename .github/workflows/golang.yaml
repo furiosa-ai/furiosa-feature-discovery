@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [ '1.22.6' ]
+        go-version: [ '1.23.2' ]
 
     steps:
       - uses: actions/checkout@v4
@@ -24,8 +24,11 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Display Go version
         run: go version
-      - name: install golangci
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          args: --timeout=30m
+          version: v1.61.0
       - name: fmt
         run: make fmt-go
       - name: lint

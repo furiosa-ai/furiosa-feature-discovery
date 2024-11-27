@@ -26,6 +26,8 @@ struct Cli {
         default_value = "/etc/kubernetes/node-feature-discovery/features.d/ffd"
     )]
     output: String,
+    #[structopt(long, default_value = "5")]
+    retry_max: i32,
 }
 
 #[allow(clippy::into_iter_on_ref)]
@@ -122,12 +124,16 @@ fn remove_ffd(output_path: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
+async fn run_loop(output_path: &Path, interval: u64, retry_max: i32) -> anyhow::Result<()> {
     log::info!("Start to write labels");
 
     let mut sigterm = signal(SignalKind::terminate())?;
     let mut sigint = signal(SignalKind::interrupt())?;
     let mut sigquit = signal(SignalKind::quit())?;
+
+    let mut attempts = 0;
+    let mut retry_time = 0;
+    let mut retry_interval;
 
     let mut interval = time::interval(Duration::from_secs(interval));
 
@@ -137,10 +143,22 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
             _ = sigint.recv() => {log::trace!("SIGINT Shuting down"); break},
             _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
             _ = interval.tick() => match sync_label(output_path).await {
-                Ok(()) => {},
+                Ok(()) => {
+                    attempts = 0;
+                    retry_time = 0;
+                },
                 Err(_) => {
                     log::error!("Failed to write node labels");
-                    break
+                    if attempts >= retry_max {
+                        log::error!("Retry limit reached. Exiting");
+                        break
+                    }
+                    attempts += 1;
+                    retry_time += 5;
+                    retry_interval = time::interval_at(time::Instant::now() + Duration::from_secs(retry_time), Duration::from_secs(retry_time));
+                    retry_interval.tick().await;
+
+                    log::error!("Retry to write node labels: {} / {} times", attempts, retry_max);
                 },
             }
         }
@@ -224,7 +242,9 @@ async fn main() -> anyhow::Result<()> {
     let output = args.output;
     let output_path = Path::new(&output);
 
-    run_loop(output_path, args.interval).await?;
+    let retry_max = args.retry_max;
+
+    run_loop(output_path, args.interval, retry_max).await?;
 
     log::info!("furiosa-feature-discovery has finished");
 

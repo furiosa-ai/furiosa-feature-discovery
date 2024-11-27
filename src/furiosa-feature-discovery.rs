@@ -124,7 +124,7 @@ fn remove_ffd(output_path: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_loop(output_path: &Path, interval: u64, retry_max: i32) -> anyhow::Result<()> {
+async fn run_loop(output_path: &Path, interval_time: u64, retry_max: i32) -> anyhow::Result<()> {
     log::info!("Start to write labels");
 
     let mut sigterm = signal(SignalKind::terminate())?;
@@ -135,7 +135,7 @@ async fn run_loop(output_path: &Path, interval: u64, retry_max: i32) -> anyhow::
     let mut retry_time = 0;
     let mut retry_interval;
 
-    let mut interval = time::interval(Duration::from_secs(interval));
+    let mut interval = time::interval(Duration::from_secs(interval_time));
 
     loop {
         tokio::select! {
@@ -158,6 +158,7 @@ async fn run_loop(output_path: &Path, interval: u64, retry_max: i32) -> anyhow::
                     retry_interval = time::interval_at(time::Instant::now() + Duration::from_secs(retry_time), Duration::from_secs(retry_time));
                     retry_interval.tick().await;
 
+                    interval = time::interval(Duration::from_secs(interval_time));
                     log::error!("Retry to write node labels: {} / {} times", attempts, retry_max);
                 },
             }

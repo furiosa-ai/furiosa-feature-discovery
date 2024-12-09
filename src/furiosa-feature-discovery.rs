@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::fs::{create_dir_all, remove_file};
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use structopt::StructOpt;
@@ -27,7 +27,7 @@ struct Cli {
     )]
     output: String,
     #[structopt(long, default_value = "5")]
-    retry_max: i32,
+    retry_max: u64,
 }
 
 #[allow(clippy::into_iter_on_ref)]
@@ -64,7 +64,7 @@ async fn extract_labels(devices: Vec<NpuDevice>) -> anyhow::Result<BTreeMap<Stri
 
 fn sync_file_atomically(
     labels: BTreeMap<String, String>,
-    output_path: &Path,
+    output_path: PathBuf,
 ) -> anyhow::Result<()> {
     if !labels.is_empty() {
         log::info!("Writing labels to output file: {}", output_path.display());
@@ -117,49 +117,80 @@ fn sync_file_atomically(
     Ok(())
 }
 
-fn remove_ffd(output_path: &Path) -> anyhow::Result<()> {
+fn remove_ffd(output_path: PathBuf) -> anyhow::Result<()> {
     if output_path.is_file() {
         remove_file(output_path)?;
     }
     Ok(())
 }
 
-async fn run_loop(output_path: &Path, interval_time: u64, retry_max: i32) -> anyhow::Result<()> {
+async fn back_off_retry<F, Fut, Arg, Arg2>(
+    retry_max: u64,
+    func: F,
+    arg: Arg,
+    arg2: Arg2,
+) -> anyhow::Result<()>
+where
+    F: Fn(Arg, Arg2) -> Fut + Send + 'static,
+    Fut: std::future::Future<Output = anyhow::Result<()>> + Send + 'static,
+    Arg: Clone + 'static,
+    Arg2: Clone + 'static,
+{
+    let mut attempts = 0;
+    let mut retry_time = 0;
+    let mut retry_interval;
+
+    loop {
+        match func(arg.clone(), arg2.clone()).await {
+            Ok(()) => {
+                attempts = 0;
+                retry_time = 0;
+            }
+            Err(_) => {
+                log::error!("Failed to execute function");
+                if attempts >= retry_max {
+                    log::error!("Retry limit reached. Exiting");
+                    break;
+                }
+                attempts += 1;
+                retry_time += 5;
+                retry_interval = time::interval_at(
+                    time::Instant::now() + Duration::from_secs(retry_time),
+                    Duration::from_secs(retry_time),
+                );
+                retry_interval.tick().await;
+
+                log::error!(
+                    "Retry to write node labels: {} / {} times",
+                    attempts,
+                    retry_max
+                );
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn run_loop(output_path: PathBuf, interval: u64) -> anyhow::Result<()> {
     log::info!("Start to write labels");
 
     let mut sigterm = signal(SignalKind::terminate())?;
     let mut sigint = signal(SignalKind::interrupt())?;
     let mut sigquit = signal(SignalKind::quit())?;
 
-    let mut attempts = 0;
-    let mut retry_time = 0;
-    let mut retry_interval;
-
-    let mut interval = time::interval(Duration::from_secs(interval_time));
+    let mut interval = time::interval(Duration::from_secs(interval));
 
     loop {
         tokio::select! {
             _ = sigterm.recv() => {log::trace!("SIGTERM Shuting down"); break},
             _ = sigint.recv() => {log::trace!("SIGINT Shuting down"); break},
             _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
-            _ = interval.tick() => match sync_label(output_path).await {
-                Ok(()) => {
-                    attempts = 0;
-                    retry_time = 0;
-                },
+            _ = interval.tick() => match sync_label(output_path.clone()).await {
+                Ok(()) => {},
                 Err(_) => {
                     log::error!("Failed to write node labels");
-                    if attempts >= retry_max {
-                        log::error!("Retry limit reached. Exiting");
-                        break
-                    }
-                    attempts += 1;
-                    retry_time += 5;
-                    retry_interval = time::interval_at(time::Instant::now() + Duration::from_secs(retry_time), Duration::from_secs(retry_time));
-                    retry_interval.tick().await;
-
-                    interval = time::interval(Duration::from_secs(interval_time));
-                    log::error!("Retry to write node labels: {} / {} times", attempts, retry_max);
+                    break
                 },
             }
         }
@@ -172,7 +203,7 @@ async fn run_loop(output_path: &Path, interval_time: u64, retry_max: i32) -> any
     Ok(())
 }
 
-async fn sync_label(output_path: &Path) -> anyhow::Result<()> {
+async fn sync_label(output_path: PathBuf) -> anyhow::Result<()> {
     let detected = match detect_npu_devices().await {
         Ok(dev) => dev,
         Err(e) => {
@@ -240,12 +271,12 @@ async fn main() -> anyhow::Result<()> {
 
     let args = Cli::from_args();
 
-    let output = args.output;
-    let output_path = Path::new(&output);
+    let output = args.output.clone();
+    let output_path = PathBuf::from(output);
 
     let retry_max = args.retry_max;
 
-    run_loop(output_path, args.interval, retry_max).await?;
+    back_off_retry::<_, _, PathBuf, u64>(retry_max, run_loop, output_path, args.interval).await?;
 
     log::info!("furiosa-feature-discovery has finished");
 

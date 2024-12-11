@@ -188,9 +188,9 @@ async fn run_loop(output_path: PathBuf, interval: u64) -> anyhow::Result<()> {
             _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
             _ = interval.tick() => match sync_label(output_path.clone()).await {
                 Ok(()) => {},
-                Err(_) => {
+                Err(e) => {
                     log::error!("Failed to write node labels");
-                    break
+                    return Err(e);
                 },
             }
         }

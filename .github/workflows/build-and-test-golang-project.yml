@@ -1,10 +1,14 @@
-name: Golang
+name: Build & Test Golang Project
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   GITHUB_TOKEN: ${{ secrets.TOKEN_FOR_CLONE_ANOTHER_REPO }}

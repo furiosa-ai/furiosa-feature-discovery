@@ -124,24 +124,24 @@ fn remove_ffd(output_path: PathBuf) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn back_off_retry<F, Fut, Arg, Arg2>(
+async fn back_off_retry<F, Fut, ArgPath, ArgInterval>(
     retry_max: u64,
     func: F,
-    arg: Arg,
-    arg2: Arg2,
+    arg_path: ArgPath,
+    arg_interval: ArgInterval,
 ) -> anyhow::Result<()>
 where
-    F: Fn(Arg, Arg2) -> Fut + Send + 'static,
+    F: Fn(ArgPath, ArgInterval) -> Fut + Send + 'static,
     Fut: std::future::Future<Output = anyhow::Result<()>> + Send + 'static,
-    Arg: Clone + 'static,
-    Arg2: Clone + 'static,
+    ArgPath: Clone + 'static,
+    ArgInterval: Clone + 'static,
 {
     let mut attempts = 0;
     let mut retry_time = 0;
     let mut retry_interval;
 
     loop {
-        match func(arg.clone(), arg2.clone()).await {
+        match func(arg_path.clone(), arg_interval.clone()).await {
             Ok(()) => {
                 attempts = 0;
                 retry_time = 0;

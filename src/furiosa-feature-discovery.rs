@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::fs::{create_dir_all, remove_file};
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use structopt::StructOpt;
@@ -26,6 +26,8 @@ struct Cli {
         default_value = "/etc/kubernetes/node-feature-discovery/features.d/ffd"
     )]
     output: String,
+    #[structopt(long, default_value = "5")]
+    retry_max: u64,
 }
 
 #[allow(clippy::into_iter_on_ref)]
@@ -62,7 +64,7 @@ async fn extract_labels(devices: Vec<NpuDevice>) -> anyhow::Result<BTreeMap<Stri
 
 fn sync_file_atomically(
     labels: BTreeMap<String, String>,
-    output_path: &Path,
+    output_path: PathBuf,
 ) -> anyhow::Result<()> {
     if !labels.is_empty() {
         log::info!("Writing labels to output file: {}", output_path.display());
@@ -115,14 +117,62 @@ fn sync_file_atomically(
     Ok(())
 }
 
-fn remove_ffd(output_path: &Path) -> anyhow::Result<()> {
+fn remove_ffd(output_path: PathBuf) -> anyhow::Result<()> {
     if output_path.is_file() {
         remove_file(output_path)?;
     }
     Ok(())
 }
 
-async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
+async fn back_off_retry<F, Fut, ArgPath, ArgInterval>(
+    retry_max: u64,
+    func: F,
+    arg_path: ArgPath,
+    arg_interval: ArgInterval,
+) -> anyhow::Result<()>
+where
+    F: Fn(ArgPath, ArgInterval) -> Fut + Send + 'static,
+    Fut: std::future::Future<Output = anyhow::Result<()>> + Send + 'static,
+    ArgPath: Clone + 'static,
+    ArgInterval: Clone + 'static,
+{
+    let mut attempts = 0;
+    let mut retry_time = 0;
+    let mut retry_interval;
+
+    loop {
+        match func(arg_path.clone(), arg_interval.clone()).await {
+            Ok(()) => {
+                attempts = 0;
+                retry_time = 0;
+            }
+            Err(_) => {
+                log::error!("Failed to execute function");
+                if attempts >= retry_max {
+                    log::error!("Retry limit reached. Exiting");
+                    break;
+                }
+                attempts += 1;
+                retry_time += 5;
+                retry_interval = time::interval_at(
+                    time::Instant::now() + Duration::from_secs(retry_time),
+                    Duration::from_secs(retry_time),
+                );
+                retry_interval.tick().await;
+
+                log::error!(
+                    "Retry to write node labels: {} / {} times",
+                    attempts,
+                    retry_max
+                );
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn run_loop(output_path: PathBuf, interval: u64) -> anyhow::Result<()> {
     log::info!("Start to write labels");
 
     let mut sigterm = signal(SignalKind::terminate())?;
@@ -136,11 +186,11 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
             _ = sigterm.recv() => {log::trace!("SIGTERM Shuting down"); break},
             _ = sigint.recv() => {log::trace!("SIGINT Shuting down"); break},
             _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
-            _ = interval.tick() => match sync_label(output_path).await {
+            _ = interval.tick() => match sync_label(output_path.clone()).await {
                 Ok(()) => {},
-                Err(_) => {
+                Err(e) => {
                     log::error!("Failed to write node labels");
-                    break
+                    return Err(e);
                 },
             }
         }
@@ -153,7 +203,7 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn sync_label(output_path: &Path) -> anyhow::Result<()> {
+async fn sync_label(output_path: PathBuf) -> anyhow::Result<()> {
     let detected = match detect_npu_devices().await {
         Ok(dev) => dev,
         Err(e) => {
@@ -221,10 +271,12 @@ async fn main() -> anyhow::Result<()> {
 
     let args = Cli::from_args();
 
-    let output = args.output;
-    let output_path = Path::new(&output);
+    let output = args.output.clone();
+    let output_path = PathBuf::from(output);
 
-    run_loop(output_path, args.interval).await?;
+    let retry_max = args.retry_max;
+
+    back_off_retry::<_, _, PathBuf, u64>(retry_max, run_loop, output_path, args.interval).await?;
 
     log::info!("furiosa-feature-discovery has finished");
 

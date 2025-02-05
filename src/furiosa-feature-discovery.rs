@@ -182,6 +182,8 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
     log::info!("Start to detect npu devices");
     let mut found = vec![];
 
+    furiosa_smi_rs::init()?;
+
     let devices = furiosa_smi_rs::list_devices()?;
 
     let driver = furiosa_smi_rs::driver_info()?;

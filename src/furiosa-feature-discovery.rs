@@ -224,6 +224,7 @@ async fn main() -> anyhow::Result<()> {
     let output = args.output;
     let output_path = Path::new(&output);
 
+    furiosa_smi_rs::init()?;
     run_loop(output_path, args.interval).await?;
 
     log::info!("furiosa-feature-discovery has finished");

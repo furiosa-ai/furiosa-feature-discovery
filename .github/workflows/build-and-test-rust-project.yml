@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.TOKEN_FOR_CLONE_ANOTHER_REPO }}
@@ -21,10 +17,19 @@ jobs:
         os: ['ubuntu-20.04', 'ubuntu-22.04', 'ubuntu-24.04']
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Prepare `furiosa-smi`
-        uses: furiosa-ai/furiosa-smi/actions/prepare@main
+      - name: checkout furiosa-smi
+        uses: actions/checkout@v4
         with:
-          personal-access-token: '${{ secrets.TOKEN_FOR_CLONE_ANOTHER_REPO }}'
+          repository: furiosa-ai/furiosa-smi
+          token: ${{ env.GITHUB_TOKEN }}
+          path: furiosa-smi
+      - name: install furiosa-smi
+        run: |
+          cd furiosa-smi
+          rustup component add clippy rustfmt
+          cargo build
+          make install
+          sudo ldconfig
       - uses: actions/checkout@v4
       - name: set github credentials
         run: |

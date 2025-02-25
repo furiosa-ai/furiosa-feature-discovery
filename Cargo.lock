@@ -407,8 +407,8 @@ dependencies = [
 
 [[package]]
 name = "furiosa-smi-rs"
-version = "0.1.0"
-source = "git+https://github.com/furiosa-ai/furiosa-smi-rs?tag=v0.1.6#e6e067e1f3a612729254943d425b076d8401303a"
+version = "2025.1.0"
+source = "git+https://github.com/furiosa-ai/furiosa-smi-rs?tag=2025.1.0#809c038415970634ec8b1ed54794ec9c26f8bcf8"
 dependencies = [
  "attohttpc",
  "autotools",

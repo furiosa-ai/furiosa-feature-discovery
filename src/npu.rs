@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::fmt;
 use std::io::{Error, ErrorKind, Result};
 
 fn recognize_family(arch: &str) -> Result<String> {
@@ -53,18 +54,21 @@ impl VersionInfo {
     pub fn metadata(self) -> String {
         self.metadata
     }
-
-    pub fn to_string(&self) -> String {
-        format!(
-            "{}.{}.{}+{}",
-            self.major, self.minor, self.patch, self.metadata
-        )
-    }
 }
 
 impl From<furiosa_smi_rs::VersionInfo> for VersionInfo {
     fn from(info: furiosa_smi_rs::VersionInfo) -> Self {
         VersionInfo::new(info.major(), info.minor(), info.patch(), info.metadata())
+    }
+}
+
+impl fmt::Display for VersionInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}.{}.{}+{}",
+            self.major, self.minor, self.patch, self.metadata
+        )
     }
 }
 

@@ -36,10 +36,43 @@ fn labels_to_feature(map: &BTreeMap<String, String>) -> String {
         .join("\n")
 }
 
+fn check_labels(devices: Vec<NpuDevice>) -> Vec<NpuDevice> {
+    let mut result = devices.clone();
+    if let Some(first) = devices.first() {
+        if !devices
+            .iter()
+            .all(|x| x.firmware_info == first.firmware_info)
+        {
+            log::info!("Some devices have different values for firmware version");
+            result = result
+                .into_iter()
+                .map(|mut x| {
+                    x.firmware_info = None;
+                    x
+                })
+                .collect();
+        }
+        if !devices.iter().all(|x| x.pert_info == first.pert_info) {
+            log::info!("Some devices have different values for pert version");
+            result = result
+                .into_iter()
+                .map(|mut x| {
+                    x.pert_info = None;
+                    x
+                })
+                .collect();
+        }
+    }
+
+    result
+}
+
 async fn extract_labels(devices: Vec<NpuDevice>) -> anyhow::Result<BTreeMap<String, String>> {
     log::info!("Start to extract node labels");
     if !devices.is_empty() {
         let device_count = devices.len();
+
+        let devices = check_labels(devices);
 
         let mut labels = devices.into_iter().flat_map(|d| d.to_labels()).fold(
             BTreeMap::new(),
@@ -197,7 +230,14 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
         let pert = device_info.pert_version();
         let pert_info = VersionInfo::from(pert);
 
-        match NpuDevice::new(&arch, firmware_info, driver_info.clone(), pert_info).await {
+        match NpuDevice::new(
+            &arch,
+            driver_info.clone(),
+            Some(firmware_info),
+            Some(pert_info),
+        )
+        .await
+        {
             Ok(device) => found.push(device),
             Err(e) => log::error!("Failed to recognize device: {}", e),
         };
@@ -249,8 +289,8 @@ mod tests {
         let device_warboy = NpuDevice::new(
             "warboy",
             version_info.clone(),
-            version_info.clone(),
-            version_info.clone(),
+            Some(version_info.clone()),
+            Some(version_info.clone()),
         )
         .await
         .unwrap();

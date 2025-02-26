@@ -72,21 +72,21 @@ impl fmt::Display for VersionInfo {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct NpuDevice {
     family: String,
     product: String,
-    firmware_info: VersionInfo,
     driver_info: VersionInfo,
-    pert_info: VersionInfo,
+    pub firmware_info: Option<VersionInfo>,
+    pub pert_info: Option<VersionInfo>,
 }
 
 impl NpuDevice {
     pub async fn new(
         arch: &str,
-        firmware_info: VersionInfo,
         driver_info: VersionInfo,
-        pert_info: VersionInfo,
+        firmware_info: Option<VersionInfo>,
+        pert_info: Option<VersionInfo>,
     ) -> Result<NpuDevice> {
         let family = recognize_family(arch)?;
         let product = recognize_product(arch)?;
@@ -94,36 +94,16 @@ impl NpuDevice {
         Ok(NpuDevice {
             family,
             product,
-            firmware_info,
             driver_info,
+            firmware_info,
             pert_info,
         })
     }
 
     pub fn to_labels(&self) -> BTreeMap<String, String> {
-        let labels: Vec<(String, String)> = vec![
+        let mut labels: Vec<(String, String)> = vec![
             ("furiosa.ai/npu.family".to_string(), self.family.clone()),
             ("furiosa.ai/npu.product".to_string(), self.product.clone()),
-            (
-                "furiosa.ai/firmware.version".to_string(),
-                self.firmware_info.to_string(),
-            ),
-            (
-                "furiosa.ai/firmware.version.major".to_string(),
-                self.firmware_info.clone().major().to_string(),
-            ),
-            (
-                "furiosa.ai/firmware.version.minor".to_string(),
-                self.firmware_info.clone().minor().to_string(),
-            ),
-            (
-                "furiosa.ai/firmware.version.patch".to_string(),
-                self.firmware_info.clone().patch().to_string(),
-            ),
-            (
-                "furiosa.ai/firmware.version.metadata".to_string(),
-                self.firmware_info.clone().metadata().clone(),
-            ),
             (
                 "furiosa.ai/driver.version".to_string(),
                 self.driver_info.to_string(),
@@ -144,27 +124,51 @@ impl NpuDevice {
                 "furiosa.ai/driver.version.metadata".to_string(),
                 self.driver_info.clone().metadata().clone(),
             ),
-            (
-                "furiosa.ai/pert.version".to_string(),
-                self.pert_info.to_string(),
-            ),
-            (
-                "furiosa.ai/pert.version.major".to_string(),
-                self.pert_info.clone().major().to_string(),
-            ),
-            (
-                "furiosa.ai/pert.version.minor".to_string(),
-                self.pert_info.clone().minor().to_string(),
-            ),
-            (
-                "furiosa.ai/pert.version.patch".to_string(),
-                self.pert_info.clone().patch().to_string(),
-            ),
-            (
-                "furiosa.ai/pert.version.metadata".to_string(),
-                self.pert_info.clone().metadata().clone(),
-            ),
         ];
+
+        if let Some(firmware_info) = &self.firmware_info {
+            labels.push((
+                "furiosa.ai/firmware.version".to_string(),
+                firmware_info.to_string(),
+            ));
+            labels.push((
+                "furiosa.ai/firmware.version.major".to_string(),
+                firmware_info.clone().major().to_string(),
+            ));
+            labels.push((
+                "furiosa.ai/firmware.version.minor".to_string(),
+                firmware_info.clone().minor().to_string(),
+            ));
+            labels.push((
+                "furiosa.ai/firmware.version.patch".to_string(),
+                firmware_info.clone().patch().to_string(),
+            ));
+            labels.push((
+                "furiosa.ai/firmware.version.metadata".to_string(),
+                firmware_info.clone().metadata().clone(),
+            ));
+        };
+
+        if let Some(pert_info) = &self.pert_info {
+            labels.push(("furiosa.ai/pert.version".to_string(), pert_info.to_string()));
+            labels.push((
+                "furiosa.ai/pert.version.major".to_string(),
+                pert_info.clone().major().to_string(),
+            ));
+            labels.push((
+                "furiosa.ai/pert.version.minor".to_string(),
+                pert_info.clone().minor().to_string(),
+            ));
+            labels.push((
+                "furiosa.ai/pert.version.patch".to_string(),
+                pert_info.clone().patch().to_string(),
+            ));
+            labels.push((
+                "furiosa.ai/pert.version.metadata".to_string(),
+                pert_info.clone().metadata().clone(),
+            ));
+        };
+
         labels.into_iter().collect()
     }
 }
@@ -179,16 +183,16 @@ mod tests {
         let device = NpuDevice::new(
             "warboy",
             version_info.clone(),
-            version_info.clone(),
-            version_info.clone(),
+            Some(version_info.clone()),
+            Some(version_info.clone()),
         )
         .await;
         let expected = NpuDevice {
             family: "warboy".to_string(),
             product: "warboy".to_string(),
-            firmware_info: version_info.clone(),
             driver_info: version_info.clone(),
-            pert_info: version_info.clone(),
+            firmware_info: Some(version_info.clone()),
+            pert_info: Some(version_info.clone()),
         };
 
         assert!(device.is_ok());

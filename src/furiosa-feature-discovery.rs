@@ -12,7 +12,7 @@ use tempfile::Builder;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::time;
 
-use crate::npu::NpuDevice;
+use crate::npu::{NpuDevice, VersionInfo};
 
 mod npu;
 
@@ -36,10 +36,43 @@ fn labels_to_feature(map: &BTreeMap<String, String>) -> String {
         .join("\n")
 }
 
+fn check_labels(devices: Vec<NpuDevice>) -> Vec<NpuDevice> {
+    let mut result = devices.clone();
+    if let Some(first) = devices.first() {
+        if !devices
+            .iter()
+            .all(|x| x.firmware_info == first.firmware_info)
+        {
+            log::info!("Some devices have different values for firmware version");
+            result = result
+                .into_iter()
+                .map(|mut x| {
+                    x.firmware_info = None;
+                    x
+                })
+                .collect();
+        }
+        if !devices.iter().all(|x| x.pert_info == first.pert_info) {
+            log::info!("Some devices have different values for pert version");
+            result = result
+                .into_iter()
+                .map(|mut x| {
+                    x.pert_info = None;
+                    x
+                })
+                .collect();
+        }
+    }
+
+    result
+}
+
 async fn extract_labels(devices: Vec<NpuDevice>) -> anyhow::Result<BTreeMap<String, String>> {
     log::info!("Start to extract node labels");
     if !devices.is_empty() {
         let device_count = devices.len();
+
+        let devices = check_labels(devices);
 
         let mut labels = devices.into_iter().flat_map(|d| d.to_labels()).fold(
             BTreeMap::new(),
@@ -185,21 +218,23 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
     let devices = furiosa_smi_rs::list_devices()?;
 
     let driver = furiosa_smi_rs::driver_info()?;
-    let driver_major = driver.major();
-    let driver_minor = driver.minor();
-    let driver_patch = driver.patch();
-    let driver_metadata = driver.metadata();
+    let driver_info = VersionInfo::from(driver);
 
     for device in &devices {
         let device_info = device.device_info()?;
         let arch = device_info.arch().to_string();
 
+        let firmware = device_info.firmware_version();
+        let firmware_info = VersionInfo::from(firmware);
+
+        let pert = device_info.pert_version();
+        let pert_info = VersionInfo::from(pert);
+
         match NpuDevice::new(
             &arch,
-            driver_major,
-            driver_minor,
-            driver_patch,
-            driver_metadata.clone(),
+            driver_info.clone(),
+            Some(firmware_info),
+            Some(pert_info),
         )
         .await
         {
@@ -250,19 +285,59 @@ mod tests {
 
     #[tokio::test]
     async fn test_extract_labels() {
-        let device_warboy = NpuDevice::new("warboy", 1, 2, 3, "1a2b3c".to_string())
-            .await
-            .unwrap();
+        let version_info = VersionInfo::new(1, 2, 3, "1a2b3c".to_string());
+        let device_warboy = NpuDevice::new(
+            "warboy",
+            version_info.clone(),
+            Some(version_info.clone()),
+            Some(version_info.clone()),
+        )
+        .await
+        .unwrap();
 
         let labels = extract_labels(vec![device_warboy]).await.unwrap();
 
         let mut expected = BTreeMap::new();
-        expected.insert("furiosa.ai/driver.version".to_string(), "1.2.3".to_string());
+        expected.insert(
+            "furiosa.ai/firmware.version".to_string(),
+            "1.2.3+1a2b3c".to_string(),
+        );
+        expected.insert(
+            "furiosa.ai/firmware.version.major".to_string(),
+            1.to_string(),
+        );
+        expected.insert(
+            "furiosa.ai/firmware.version.minor".to_string(),
+            2.to_string(),
+        );
+        expected.insert(
+            "furiosa.ai/firmware.version.patch".to_string(),
+            3.to_string(),
+        );
+        expected.insert(
+            "furiosa.ai/firmware.version.metadata".to_string(),
+            "1a2b3c".to_string(),
+        );
+        expected.insert(
+            "furiosa.ai/driver.version".to_string(),
+            "1.2.3+1a2b3c".to_string(),
+        );
         expected.insert("furiosa.ai/driver.version.major".to_string(), 1.to_string());
         expected.insert("furiosa.ai/driver.version.minor".to_string(), 2.to_string());
         expected.insert("furiosa.ai/driver.version.patch".to_string(), 3.to_string());
         expected.insert(
             "furiosa.ai/driver.version.metadata".to_string(),
+            "1a2b3c".to_string(),
+        );
+        expected.insert(
+            "furiosa.ai/pert.version".to_string(),
+            "1.2.3+1a2b3c".to_string(),
+        );
+        expected.insert("furiosa.ai/pert.version.major".to_string(), 1.to_string());
+        expected.insert("furiosa.ai/pert.version.minor".to_string(), 2.to_string());
+        expected.insert("furiosa.ai/pert.version.patch".to_string(), 3.to_string());
+        expected.insert(
+            "furiosa.ai/pert.version.metadata".to_string(),
             "1a2b3c".to_string(),
         );
         expected.insert("furiosa.ai/npu.family".to_string(), "warboy".to_string());

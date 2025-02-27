@@ -300,7 +300,7 @@ mod tests {
         let mut expected = BTreeMap::new();
         expected.insert(
             "furiosa.ai/firmware.version".to_string(),
-            "1.2.3+1a2b3c".to_string(),
+            "1.2.3".to_string(),
         );
         expected.insert(
             "furiosa.ai/firmware.version.major".to_string(),
@@ -318,10 +318,7 @@ mod tests {
             "furiosa.ai/firmware.version.metadata".to_string(),
             "1a2b3c".to_string(),
         );
-        expected.insert(
-            "furiosa.ai/driver.version".to_string(),
-            "1.2.3+1a2b3c".to_string(),
-        );
+        expected.insert("furiosa.ai/driver.version".to_string(), "1.2.3".to_string());
         expected.insert("furiosa.ai/driver.version.major".to_string(), 1.to_string());
         expected.insert("furiosa.ai/driver.version.minor".to_string(), 2.to_string());
         expected.insert("furiosa.ai/driver.version.patch".to_string(), 3.to_string());
@@ -329,10 +326,7 @@ mod tests {
             "furiosa.ai/driver.version.metadata".to_string(),
             "1a2b3c".to_string(),
         );
-        expected.insert(
-            "furiosa.ai/pert.version".to_string(),
-            "1.2.3+1a2b3c".to_string(),
-        );
+        expected.insert("furiosa.ai/pert.version".to_string(), "1.2.3".to_string());
         expected.insert("furiosa.ai/pert.version.major".to_string(), 1.to_string());
         expected.insert("furiosa.ai/pert.version.minor".to_string(), 2.to_string());
         expected.insert("furiosa.ai/pert.version.patch".to_string(), 3.to_string());

@@ -64,11 +64,7 @@ impl From<furiosa_smi_rs::VersionInfo> for VersionInfo {
 
 impl fmt::Display for VersionInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}.{}.{}+{}",
-            self.major, self.minor, self.patch, self.metadata
-        )
+        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
     }
 }
 

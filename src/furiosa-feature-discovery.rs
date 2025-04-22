@@ -221,7 +221,13 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
     let driver_info = VersionInfo::from(driver);
 
     for device in &devices {
-        let device_info = device.device_info()?;
+        let device_info = match device.device_info() {
+            Ok(info) => info,
+            Err(e) => {
+                log::error!("Failed to get device information: {}", e);
+                continue;
+            }
+        };
         let arch = device_info.arch().to_string();
 
         let firmware = device_info.firmware_version();

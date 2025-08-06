@@ -11,12 +11,8 @@ endif
 CGO_CFLAGS := -I/usr/local/include
 CGO_LDFLAGS := -L/usr/local/lib
 
-LABELS_TO_REMOVE := furiosa.ai/driver.version furiosa.ai/driver.version.major furiosa.ai/driver.version.minor furiosa.ai/driver.version.patch furiosa.ai/driver.version.metadata furiosa.ai/npu.count furiosa.ai/npu.family furiosa.ai/npu.product
-
-NODES := $(shell kubectl get nodes -o name | sed 's/node\///')
-
 .PHONY: fmt
-fmt: fmt-rs fmt-go
+fmt: fmt-rs
 
 .PHONY: fmt-rs
 fmt-rs:
@@ -24,32 +20,9 @@ fmt-rs:
 	# cargo machete # machete is not compatible with toolchain of this repo.
 	cargo sort --grouped --workspace
 
-.PHONY: fmt-go
-fmt-go:
-	go fmt ./...
-
-.PHONY: lint
-lint: clippy lint-go
-
 .PHONY: clippy
 clippy:
 	cargo fmt --all --check && cargo -q clippy --all-targets -- -D rust_2018_idioms -D warnings
-
-.PHONY: lint-go
-lint-go:
-	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) golangci-lint run --timeout=30m
-
-.PHONY: vet
-vet:
-	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go vet -v ./...
-
-.PHONY: tidy
-tidy:
-	go mod tidy
-
-.PHONY: vendor
-vendor:
-	go mod vendor
 
 .PHONY: clean
 clean:
@@ -58,10 +31,6 @@ clean:
 .PHONY: build
 build:
 	cargo build --release
-
-.PHONY: build-go
-build-go:
-	CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go build ./...
 
 .PHONY: image
 image:
@@ -85,7 +54,9 @@ test:
 
 .PHONY: clean-labels
 clean-labels:
+	@LABELS_TO_REMOVE="furiosa.ai/driver.version furiosa.ai/driver.version.major furiosa.ai/driver.version.minor furiosa.ai/driver.version.patch furiosa.ai/driver.version.metadata furiosa.ai/npu.count furiosa.ai/npu.family furiosa.ai/npu.product"
 	@echo "Labels to remove: $(LABELS_TO_REMOVE)"
+	@NODES=$$(kubectl get nodes -o name | sed 's/node\///')
 	@for node in $(NODES); do \
 		echo "Processing node: $$node"; \
 		CURRENT_LABELS=$$(kubectl get node $$node --show-labels | grep -oP '(?<=,|^)\K[^=]+'); \

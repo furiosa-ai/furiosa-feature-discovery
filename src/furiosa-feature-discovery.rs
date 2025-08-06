@@ -274,11 +274,11 @@ mod tests {
     #[test]
     fn test_labels_to_feature() {
         let mut labels = BTreeMap::new();
-        labels.insert("furiosa.ai/npu.family".to_string(), "Warboy".to_string());
-        labels.insert("furiosa.ai/npu.product".to_string(), "Warboy".to_string());
+        labels.insert("furiosa.ai/npu.family".to_string(), "rngd".to_string());
+        labels.insert("furiosa.ai/npu.product".to_string(), "rngd".to_string());
 
         let feature = labels_to_feature(&labels);
-        let expected = "furiosa.ai/npu.family=Warboy\nfuriosa.ai/npu.product=Warboy".to_string();
+        let expected = "furiosa.ai/npu.family=Warboy\nfuriosa.ai/npu.product=rngd".to_string();
 
         assert_eq!(feature, expected)
     }
@@ -287,7 +287,7 @@ mod tests {
     async fn test_extract_labels() {
         let version_info = VersionInfo::new(1, 2, 3, "1a2b3c".to_string());
         let device_warboy = NpuDevice::new(
-            "warboy",
+            "rngd",
             version_info.clone(),
             Some(version_info.clone()),
             Some(version_info.clone()),
@@ -334,8 +334,8 @@ mod tests {
             "furiosa.ai/pert.version.metadata".to_string(),
             "1a2b3c".to_string(),
         );
-        expected.insert("furiosa.ai/npu.family".to_string(), "warboy".to_string());
-        expected.insert("furiosa.ai/npu.product".to_string(), "warboy".to_string());
+        expected.insert("furiosa.ai/npu.family".to_string(), "rngd".to_string());
+        expected.insert("furiosa.ai/npu.product".to_string(), "rngd".to_string());
         expected.insert("furiosa.ai/npu.count".to_string(), 1.to_string());
 
         assert_eq!(labels, expected);

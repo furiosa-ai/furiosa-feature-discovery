@@ -52,16 +52,6 @@ fn check_labels(devices: Vec<NpuDevice>) -> Vec<NpuDevice> {
                 })
                 .collect();
         }
-        if !devices.iter().all(|x| x.pert_info == first.pert_info) {
-            log::info!("Some devices have different values for pert version");
-            result = result
-                .into_iter()
-                .map(|mut x| {
-                    x.pert_info = None;
-                    x
-                })
-                .collect();
-        }
     }
 
     result
@@ -227,17 +217,7 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
         let firmware = device_info.firmware_version();
         let firmware_info = VersionInfo::from(firmware);
 
-        let pert = device_info.pert_version();
-        let pert_info = VersionInfo::from(pert);
-
-        match NpuDevice::new(
-            &arch,
-            driver_info.clone(),
-            Some(firmware_info),
-            Some(pert_info),
-        )
-        .await
-        {
+        match NpuDevice::new(&arch, driver_info.clone(), Some(firmware_info)).await {
             Ok(device) => found.push(device),
             Err(e) => log::error!("Failed to recognize device: {}", e),
         };
@@ -286,14 +266,10 @@ mod tests {
     #[tokio::test]
     async fn test_extract_labels() {
         let version_info = VersionInfo::new(1, 2, 3, "1a2b3c".to_string());
-        let device_warboy = NpuDevice::new(
-            "warboy",
-            version_info.clone(),
-            Some(version_info.clone()),
-            Some(version_info.clone()),
-        )
-        .await
-        .unwrap();
+        let device_warboy =
+            NpuDevice::new("warboy", version_info.clone(), Some(version_info.clone()))
+                .await
+                .unwrap();
 
         let labels = extract_labels(vec![device_warboy]).await.unwrap();
 
@@ -324,14 +300,6 @@ mod tests {
         expected.insert("furiosa.ai/driver.version.patch".to_string(), 3.to_string());
         expected.insert(
             "furiosa.ai/driver.version.metadata".to_string(),
-            "1a2b3c".to_string(),
-        );
-        expected.insert("furiosa.ai/pert.version".to_string(), "1.2.3".to_string());
-        expected.insert("furiosa.ai/pert.version.major".to_string(), 1.to_string());
-        expected.insert("furiosa.ai/pert.version.minor".to_string(), 2.to_string());
-        expected.insert("furiosa.ai/pert.version.patch".to_string(), 3.to_string());
-        expected.insert(
-            "furiosa.ai/pert.version.metadata".to_string(),
             "1a2b3c".to_string(),
         );
         expected.insert("furiosa.ai/npu.family".to_string(), "warboy".to_string());

@@ -74,7 +74,6 @@ pub struct NpuDevice {
     product: String,
     driver_info: VersionInfo,
     pub firmware_info: Option<VersionInfo>,
-    pub pert_info: Option<VersionInfo>,
 }
 
 impl NpuDevice {
@@ -82,7 +81,6 @@ impl NpuDevice {
         arch: &str,
         driver_info: VersionInfo,
         firmware_info: Option<VersionInfo>,
-        pert_info: Option<VersionInfo>,
     ) -> Result<NpuDevice> {
         let family = recognize_family(arch)?;
         let product = recognize_product(arch)?;
@@ -92,7 +90,6 @@ impl NpuDevice {
             product,
             driver_info,
             firmware_info,
-            pert_info,
         })
     }
 
@@ -145,26 +142,6 @@ impl NpuDevice {
             ));
         };
 
-        if let Some(pert_info) = &self.pert_info {
-            labels.push(("furiosa.ai/pert.version".to_string(), pert_info.to_string()));
-            labels.push((
-                "furiosa.ai/pert.version.major".to_string(),
-                pert_info.clone().major().to_string(),
-            ));
-            labels.push((
-                "furiosa.ai/pert.version.minor".to_string(),
-                pert_info.clone().minor().to_string(),
-            ));
-            labels.push((
-                "furiosa.ai/pert.version.patch".to_string(),
-                pert_info.clone().patch().to_string(),
-            ));
-            labels.push((
-                "furiosa.ai/pert.version.metadata".to_string(),
-                pert_info.clone().metadata().clone(),
-            ));
-        };
-
         labels.into_iter().collect()
     }
 }
@@ -176,19 +153,13 @@ mod tests {
     #[tokio::test]
     async fn test_npu_device_new() {
         let version_info = VersionInfo::new(1, 2, 3, "a1b2c3".to_string());
-        let device = NpuDevice::new(
-            "warboy",
-            version_info.clone(),
-            Some(version_info.clone()),
-            Some(version_info.clone()),
-        )
-        .await;
+        let device =
+            NpuDevice::new("warboy", version_info.clone(), Some(version_info.clone())).await;
         let expected = NpuDevice {
             family: "warboy".to_string(),
             product: "warboy".to_string(),
             driver_info: version_info.clone(),
             firmware_info: Some(version_info.clone()),
-            pert_info: Some(version_info.clone()),
         };
 
         assert!(device.is_ok());

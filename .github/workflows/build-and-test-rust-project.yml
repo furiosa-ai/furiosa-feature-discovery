@@ -79,4 +79,6 @@ jobs:
       - name: Run build
         run: cargo build
       - name: Run tests
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: make test

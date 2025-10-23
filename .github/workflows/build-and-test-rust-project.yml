@@ -62,6 +62,12 @@ jobs:
       - name: Checkout this project
         uses: actions/checkout@v4
 
+      - name: Set GitHub credentials
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+
       - name: Install rust components
         run: rustup component add clippy rustfmt
       - name: install cargo tools

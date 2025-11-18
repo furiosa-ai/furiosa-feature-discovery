@@ -4,7 +4,6 @@ use std::io::{Error, ErrorKind, Result};
 
 fn recognize_family(arch: &str) -> Result<String> {
     let family = match arch {
-        "warboy" => "warboy",
         "rngd" | "rngd_s" | "rngd_max" => "rngd",
         _ => {
             return Err(Error::new(
@@ -153,11 +152,10 @@ mod tests {
     #[tokio::test]
     async fn test_npu_device_new() {
         let version_info = VersionInfo::new(1, 2, 3, "a1b2c3".to_string());
-        let device =
-            NpuDevice::new("warboy", version_info.clone(), Some(version_info.clone())).await;
+        let device = NpuDevice::new("rngd", version_info.clone(), Some(version_info.clone())).await;
         let expected = NpuDevice {
-            family: "warboy".to_string(),
-            product: "warboy".to_string(),
+            family: "rngd".to_string(),
+            product: "rngd".to_string(),
             driver_info: version_info.clone(),
             firmware_info: Some(version_info.clone()),
         };
@@ -168,25 +166,19 @@ mod tests {
 
     #[test]
     fn test_recognize_family() {
-        let family_warboy = recognize_family("warboy");
         let family_rngd = recognize_family("rngd");
 
-        assert!(family_warboy.is_ok());
         assert!(family_rngd.is_ok());
 
-        assert_eq!(family_warboy.unwrap(), "warboy".to_string());
         assert_eq!(family_rngd.unwrap(), "rngd".to_string());
     }
 
     #[test]
     fn test_recognize_product() {
-        let product_warboy = recognize_product("warboy");
         let product_rngd = recognize_product("rngd");
 
-        assert!(product_warboy.is_ok());
         assert!(product_rngd.is_ok());
 
-        assert_eq!(product_warboy.unwrap(), "warboy".to_string());
         assert_eq!(product_rngd.unwrap(), "rngd".to_string());
     }
 }

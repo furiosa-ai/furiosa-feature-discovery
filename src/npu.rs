@@ -26,15 +26,23 @@ pub struct VersionInfo {
     minor: u32,
     patch: u32,
     metadata: String,
+    prerelease: String,
 }
 
 impl VersionInfo {
-    pub fn new(major: u32, minor: u32, patch: u32, metadata: String) -> VersionInfo {
+    pub fn new(
+        major: u32,
+        minor: u32,
+        patch: u32,
+        metadata: String,
+        prerelease: String,
+    ) -> VersionInfo {
         VersionInfo {
             major,
             minor,
             patch,
             metadata,
+            prerelease,
         }
     }
 
@@ -53,11 +61,21 @@ impl VersionInfo {
     pub fn metadata(self) -> String {
         self.metadata
     }
+
+    pub fn prerelease(self) -> String {
+        self.prerelease
+    }
 }
 
 impl From<furiosa_smi_rs::VersionInfo> for VersionInfo {
     fn from(info: furiosa_smi_rs::VersionInfo) -> Self {
-        VersionInfo::new(info.major(), info.minor(), info.patch(), info.metadata())
+        VersionInfo::new(
+            info.major(),
+            info.minor(),
+            info.patch(),
+            info.metadata(),
+            info.prerelease(),
+        )
     }
 }
 
@@ -116,6 +134,10 @@ impl NpuDevice {
                 "furiosa.ai/driver.version.metadata".to_string(),
                 self.driver_info.clone().metadata().clone(),
             ),
+            (
+                "furiosa.ai/driver.version.prelease".to_string(),
+                self.driver_info.clone().prerelease().clone(),
+            ),
         ];
 
         if let Some(firmware_info) = &self.firmware_info {
@@ -139,6 +161,10 @@ impl NpuDevice {
                 "furiosa.ai/firmware.version.metadata".to_string(),
                 firmware_info.clone().metadata().clone(),
             ));
+            labels.push((
+                "furiosa.ai/firmware.version.prelease".to_string(),
+                firmware_info.clone().prerelease().clone(),
+            ));
         };
 
         labels.into_iter().collect()
@@ -151,7 +177,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_npu_device_new() {
-        let version_info = VersionInfo::new(1, 2, 3, "a1b2c3".to_string());
+        let version_info = VersionInfo::new(1, 2, 3, "a1b2c3".to_string(), "dev0".to_string());
         let device = NpuDevice::new("rngd", version_info.clone(), Some(version_info.clone())).await;
         let expected = NpuDevice {
             family: "rngd".to_string(),

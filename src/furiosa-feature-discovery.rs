@@ -207,6 +207,11 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
 
     let devices = furiosa_smi_rs::list_devices()?;
 
+    if devices.is_empty() {
+        log::info!("NPU device not found");
+        return Ok(found);
+    }
+
     let driver = furiosa_smi_rs::driver_info()?;
     let driver_info = VersionInfo::from(driver);
 

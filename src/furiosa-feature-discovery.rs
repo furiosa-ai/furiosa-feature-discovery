@@ -270,7 +270,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_extract_labels() {
-        let version_info = VersionInfo::new(1, 2, 3, "1a2b3c".to_string());
+        let version_info = VersionInfo::new(1, 2, 3, "1a2b3c".to_string(), "dev0".to_string());
         let device_rngd = NpuDevice::new("rngd", version_info.clone(), Some(version_info.clone()))
             .await
             .unwrap();
@@ -298,6 +298,10 @@ mod tests {
             "furiosa.ai/firmware.version.metadata".to_string(),
             "1a2b3c".to_string(),
         );
+        expected.insert(
+            "furiosa.ai/firmware.version.prelease".to_string(),
+            "dev0".to_string(),
+        );
         expected.insert("furiosa.ai/driver.version".to_string(), "1.2.3".to_string());
         expected.insert("furiosa.ai/driver.version.major".to_string(), 1.to_string());
         expected.insert("furiosa.ai/driver.version.minor".to_string(), 2.to_string());
@@ -305,6 +309,10 @@ mod tests {
         expected.insert(
             "furiosa.ai/driver.version.metadata".to_string(),
             "1a2b3c".to_string(),
+        );
+        expected.insert(
+            "furiosa.ai/driver.version.prelease".to_string(),
+            "dev0".to_string(),
         );
         expected.insert("furiosa.ai/npu.family".to_string(), "rngd".to_string());
         expected.insert("furiosa.ai/npu.product".to_string(), "rngd".to_string());

@@ -54,7 +54,7 @@ test:
 
 .PHONY: clean-labels
 clean-labels:
-	@LABELS_TO_REMOVE="furiosa.ai/driver.version furiosa.ai/driver.version.major furiosa.ai/driver.version.minor furiosa.ai/driver.version.patch furiosa.ai/driver.version.metadata furiosa.ai/npu.count furiosa.ai/npu.family furiosa.ai/npu.product"
+	@LABELS_TO_REMOVE="furiosa.ai/driver.version furiosa.ai/driver.version.major furiosa.ai/driver.version.minor furiosa.ai/driver.version.patch furiosa.ai/driver.version.metadata furiosa.ai/driver.version.prerelease furiosa.ai/npu.count furiosa.ai/npu.family furiosa.ai/npu.product"
 	@echo "Labels to remove: $(LABELS_TO_REMOVE)"
 	@NODES=$$(kubectl get nodes -o name | sed 's/node\///')
 	@for node in $(NODES); do \

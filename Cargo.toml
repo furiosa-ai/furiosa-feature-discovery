@@ -11,7 +11,7 @@ path = "src/furiosa-feature-discovery.rs"
 [dependencies]
 anyhow = "1"
 env_logger = "0.8.2"
-furiosa-smi-rs = { git = "https://github.com/furiosa-ai/furiosa-smi-rs", rev = "b71fd14" }
+furiosa-smi-rs = { git = "https://github.com/furiosa-ai/furiosa-smi-rs", rev = "b870793" }
 log = "0.4.11"
 structopt = "0.3"
 tempfile = "3.10.1"

@@ -154,16 +154,17 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
 
     let mut interval = time::interval(Duration::from_secs(interval));
 
+    let devices = furiosa_smi_rs::list_devices()?;
+
     loop {
         tokio::select! {
             _ = sigterm.recv() => {log::trace!("SIGTERM Shuting down"); break},
             _ = sigint.recv() => {log::trace!("SIGINT Shuting down"); break},
             _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
-            _ = interval.tick() => match sync_label(output_path).await {
+            _ = interval.tick() => match sync_label(devices.clone(), output_path).await {
                 Ok(()) => {},
                 Err(_) => {
                     log::error!("Failed to write node labels");
-                    break
                 },
             }
         }
@@ -176,8 +177,11 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn sync_label(output_path: &Path) -> anyhow::Result<()> {
-    let detected = match detect_npu_devices().await {
+async fn sync_label(
+    devices: Vec<furiosa_smi_rs::Device>,
+    output_path: &Path,
+) -> anyhow::Result<()> {
+    let detected = match detect_npu_devices(devices).await {
         Ok(dev) => dev,
         Err(e) => {
             log::error!("Failed to get device information: {}", e);
@@ -201,11 +205,11 @@ async fn sync_label(output_path: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
+async fn detect_npu_devices(
+    devices: Vec<furiosa_smi_rs::Device>,
+) -> anyhow::Result<Vec<NpuDevice>> {
     log::info!("Start to detect npu devices");
     let mut found = vec![];
-
-    let devices = furiosa_smi_rs::list_devices()?;
 
     if devices.is_empty() {
         log::info!("NPU device not found");
@@ -216,7 +220,14 @@ async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
     let driver_info = VersionInfo::from(driver);
 
     for device in &devices {
-        let device_info = device.device_info()?;
+        let device_info = match device.device_info() {
+            Ok(info) => info,
+            Err(e) => {
+                log::error!("Failed to get device info: {}", e);
+                continue;
+            }
+        };
+
         let arch = device_info.arch().to_string();
 
         let firmware = device_info.firmware_version();

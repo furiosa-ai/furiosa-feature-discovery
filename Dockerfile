@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=registry.corp.furiosa.ai/furiosa/libfuriosa-kubernetes:v0.3.1
+ARG BASE_IMAGE=asia-northeast3-docker.pkg.dev/next-gen-infra/furiosa-ai/libfuriosa-kubernetes:v0.3.1
 FROM $BASE_IMAGE as build
 
 ARG GITHUB_TOKEN

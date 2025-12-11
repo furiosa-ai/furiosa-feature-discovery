@@ -1,16 +1,11 @@
 use std::collections::BTreeMap;
 use std::fmt;
-use std::io::{Error, ErrorKind, Result};
+use std::io::{Error, Result};
 
 fn recognize_family(arch: &str) -> Result<String> {
     let family = match arch {
         "rngd" | "rngd_s" | "rngd_max" => "rngd",
-        _ => {
-            return Err(Error::new(
-                ErrorKind::Other,
-                format!("Unknown Arch: {}", arch),
-            ))
-        }
+        _ => return Err(Error::other(format!("Unknown Arch: {}", arch))),
     }
     .to_string();
     Ok(family)

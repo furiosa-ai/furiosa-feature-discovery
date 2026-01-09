@@ -212,8 +212,8 @@ async fn detect_npu_devices(
     let mut found = vec![];
 
     if devices.is_empty() {
-        log::info!("NPU device not found");
-        return Ok(found);
+        log::error!("If this is not a NPU node, please deploy this plugin on NPU nodes only by tolerations or nodeSelector.");
+        return Err(anyhow::Error::msg("couldn't recognize any furiosa devices"));
     }
 
     let driver = furiosa_smi_rs::driver_info()?;

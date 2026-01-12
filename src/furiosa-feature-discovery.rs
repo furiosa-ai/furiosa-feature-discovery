@@ -52,16 +52,6 @@ fn check_labels(devices: Vec<NpuDevice>) -> Vec<NpuDevice> {
                 })
                 .collect();
         }
-        if !devices.iter().all(|x| x.pert_info == first.pert_info) {
-            log::info!("Some devices have different values for pert version");
-            result = result
-                .into_iter()
-                .map(|mut x| {
-                    x.pert_info = None;
-                    x
-                })
-                .collect();
-        }
     }
 
     result
@@ -164,16 +154,17 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
 
     let mut interval = time::interval(Duration::from_secs(interval));
 
+    let devices = furiosa_smi_rs::list_devices()?;
+
     loop {
         tokio::select! {
             _ = sigterm.recv() => {log::trace!("SIGTERM Shuting down"); break},
             _ = sigint.recv() => {log::trace!("SIGINT Shuting down"); break},
             _ = sigquit.recv() => {log::trace!("SIGQUIT Shuting down"); break},
-            _ = interval.tick() => match sync_label(output_path).await {
+            _ = interval.tick() => match sync_label(devices.clone(), output_path).await {
                 Ok(()) => {},
                 Err(_) => {
                     log::error!("Failed to write node labels");
-                    break
                 },
             }
         }
@@ -186,8 +177,11 @@ async fn run_loop(output_path: &Path, interval: u64) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn sync_label(output_path: &Path) -> anyhow::Result<()> {
-    let detected = match detect_npu_devices().await {
+async fn sync_label(
+    devices: Vec<furiosa_smi_rs::Device>,
+    output_path: &Path,
+) -> anyhow::Result<()> {
+    let detected = match detect_npu_devices(devices).await {
         Ok(dev) => dev,
         Err(e) => {
             log::error!("Failed to get device information: {}", e);
@@ -211,33 +205,35 @@ async fn sync_label(output_path: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn detect_npu_devices() -> anyhow::Result<Vec<NpuDevice>> {
+async fn detect_npu_devices(
+    devices: Vec<furiosa_smi_rs::Device>,
+) -> anyhow::Result<Vec<NpuDevice>> {
     log::info!("Start to detect npu devices");
     let mut found = vec![];
 
-    let devices = furiosa_smi_rs::list_devices()?;
+    if devices.is_empty() {
+        log::error!("If this is not a NPU node, please deploy this plugin on NPU nodes only by tolerations or nodeSelector.");
+        return Err(anyhow::Error::msg("couldn't recognize any furiosa devices"));
+    }
 
     let driver = furiosa_smi_rs::driver_info()?;
     let driver_info = VersionInfo::from(driver);
 
     for device in &devices {
-        let device_info = device.device_info()?;
+        let device_info = match device.device_info() {
+            Ok(info) => info,
+            Err(e) => {
+                log::error!("Failed to get device info: {}", e);
+                continue;
+            }
+        };
+
         let arch = device_info.arch().to_string();
 
         let firmware = device_info.firmware_version();
         let firmware_info = VersionInfo::from(firmware);
 
-        let pert = device_info.pert_version();
-        let pert_info = VersionInfo::from(pert);
-
-        match NpuDevice::new(
-            &arch,
-            driver_info.clone(),
-            Some(firmware_info),
-            Some(pert_info),
-        )
-        .await
-        {
+        match NpuDevice::new(&arch, driver_info.clone(), Some(firmware_info)).await {
             Ok(device) => found.push(device),
             Err(e) => log::error!("Failed to recognize device: {}", e),
         };
@@ -274,28 +270,23 @@ mod tests {
     #[test]
     fn test_labels_to_feature() {
         let mut labels = BTreeMap::new();
-        labels.insert("furiosa.ai/npu.family".to_string(), "Warboy".to_string());
-        labels.insert("furiosa.ai/npu.product".to_string(), "Warboy".to_string());
+        labels.insert("furiosa.ai/npu.family".to_string(), "rngd".to_string());
+        labels.insert("furiosa.ai/npu.product".to_string(), "rngd".to_string());
 
         let feature = labels_to_feature(&labels);
-        let expected = "furiosa.ai/npu.family=Warboy\nfuriosa.ai/npu.product=Warboy".to_string();
+        let expected = "furiosa.ai/npu.family=rngd\nfuriosa.ai/npu.product=rngd".to_string();
 
         assert_eq!(feature, expected)
     }
 
     #[tokio::test]
     async fn test_extract_labels() {
-        let version_info = VersionInfo::new(1, 2, 3, "1a2b3c".to_string());
-        let device_warboy = NpuDevice::new(
-            "warboy",
-            version_info.clone(),
-            Some(version_info.clone()),
-            Some(version_info.clone()),
-        )
-        .await
-        .unwrap();
+        let version_info = VersionInfo::new(1, 2, 3, "1a2b3c".to_string(), "dev0".to_string());
+        let device_rngd = NpuDevice::new("rngd", version_info.clone(), Some(version_info.clone()))
+            .await
+            .unwrap();
 
-        let labels = extract_labels(vec![device_warboy]).await.unwrap();
+        let labels = extract_labels(vec![device_rngd]).await.unwrap();
 
         let mut expected = BTreeMap::new();
         expected.insert(
@@ -318,6 +309,10 @@ mod tests {
             "furiosa.ai/firmware.version.metadata".to_string(),
             "1a2b3c".to_string(),
         );
+        expected.insert(
+            "furiosa.ai/firmware.version.prelease".to_string(),
+            "dev0".to_string(),
+        );
         expected.insert("furiosa.ai/driver.version".to_string(), "1.2.3".to_string());
         expected.insert("furiosa.ai/driver.version.major".to_string(), 1.to_string());
         expected.insert("furiosa.ai/driver.version.minor".to_string(), 2.to_string());
@@ -326,16 +321,12 @@ mod tests {
             "furiosa.ai/driver.version.metadata".to_string(),
             "1a2b3c".to_string(),
         );
-        expected.insert("furiosa.ai/pert.version".to_string(), "1.2.3".to_string());
-        expected.insert("furiosa.ai/pert.version.major".to_string(), 1.to_string());
-        expected.insert("furiosa.ai/pert.version.minor".to_string(), 2.to_string());
-        expected.insert("furiosa.ai/pert.version.patch".to_string(), 3.to_string());
         expected.insert(
-            "furiosa.ai/pert.version.metadata".to_string(),
-            "1a2b3c".to_string(),
+            "furiosa.ai/driver.version.prelease".to_string(),
+            "dev0".to_string(),
         );
-        expected.insert("furiosa.ai/npu.family".to_string(), "warboy".to_string());
-        expected.insert("furiosa.ai/npu.product".to_string(), "warboy".to_string());
+        expected.insert("furiosa.ai/npu.family".to_string(), "rngd".to_string());
+        expected.insert("furiosa.ai/npu.product".to_string(), "rngd".to_string());
         expected.insert("furiosa.ai/npu.count".to_string(), 1.to_string());
 
         assert_eq!(labels, expected);

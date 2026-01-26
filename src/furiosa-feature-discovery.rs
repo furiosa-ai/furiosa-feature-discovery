@@ -310,7 +310,7 @@ mod tests {
             "1a2b3c".to_string(),
         );
         expected.insert(
-            "furiosa.ai/firmware.version.prelease".to_string(),
+            "furiosa.ai/firmware.version.prerelease".to_string(),
             "dev0".to_string(),
         );
         expected.insert("furiosa.ai/driver.version".to_string(), "1.2.3".to_string());
@@ -322,7 +322,7 @@ mod tests {
             "1a2b3c".to_string(),
         );
         expected.insert(
-            "furiosa.ai/driver.version.prelease".to_string(),
+            "furiosa.ai/driver.version.prerelease".to_string(),
             "dev0".to_string(),
         );
         expected.insert("furiosa.ai/npu.family".to_string(), "rngd".to_string());

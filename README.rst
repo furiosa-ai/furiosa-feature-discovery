@@ -32,7 +32,7 @@ The Furiosa device plugin helm chart is available at https://github.com/furiosa-
 
   helm repo add furiosa https://furiosa-ai.github.io/helm-charts
   helm repo update
-  helm install furiosa-feature-discovery furiosa/furiosa-feature-discovery -n <namespace>
+  helm install furiosa-feature-discovery furiosa/furiosa-feature-discovery -n furiosa-system
 
 
 Labels
@@ -72,7 +72,7 @@ The followings are the labels that the Furiosa Feature Discovery attaches and wh
    * - furiosa.ai/npu.driver.version.metadata
      - abcxyz
      - NPU device driver version metadata
-   * - furiosa.ai/npu.driver.version.prelease
+   * - furiosa.ai/npu.driver.version.prerelease
      - abcxyz
      - NPU device driver version pre-release part
    * - furiosa.ai/npu.firmware.version
@@ -90,7 +90,7 @@ The followings are the labels that the Furiosa Feature Discovery attaches and wh
    * - furiosa.ai/npu.firmware.version.metadata
      - abcxyz
      - NPU firmware version metadata
-   * - furiosa.ai/npu.firmware.version.prelease
+   * - furiosa.ai/npu.firmware.version.prerelease
      - abcxyz
      - NPU firmware version pre-release part
 

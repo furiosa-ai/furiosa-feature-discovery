@@ -32,7 +32,7 @@ The Furiosa device plugin helm chart is available at https://github.com/furiosa-
 
   helm repo add furiosa https://furiosa-ai.github.io/helm-charts
   helm repo update
-  helm install furiosa-feature-discovery furiosa/furiosa-feature-discovery -n <namespace>
+  helm install furiosa-feature-discovery furiosa/furiosa-feature-discovery -n furiosa-system
 
 
 Labels

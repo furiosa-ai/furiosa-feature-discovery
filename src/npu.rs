@@ -130,7 +130,7 @@ impl NpuDevice {
                 self.driver_info.clone().metadata().clone(),
             ),
             (
-                "furiosa.ai/driver.version.prelease".to_string(),
+                "furiosa.ai/driver.version.prerelease".to_string(),
                 self.driver_info.clone().prerelease().clone(),
             ),
         ];
@@ -157,7 +157,7 @@ impl NpuDevice {
                 firmware_info.clone().metadata().clone(),
             ));
             labels.push((
-                "furiosa.ai/firmware.version.prelease".to_string(),
+                "furiosa.ai/firmware.version.prerelease".to_string(),
                 firmware_info.clone().prerelease().clone(),
             ));
         };

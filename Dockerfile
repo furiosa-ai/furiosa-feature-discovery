@@ -13,14 +13,24 @@ COPY . /tmp
 
 RUN make build
 
+ARG TARGETARCH
+RUN set -eux; \
+    case "$TARGETARCH" in \
+        amd64) libDir='x86_64-linux-gnu' ;; \
+        arm64) libDir='aarch64-linux-gnu' ;; \
+        *) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;; \
+    esac; \
+    mkdir -p /staging/usr/lib/$libDir; \
+    cp /usr/lib/$libDir/libfuriosa_smi.so /staging/usr/lib/$libDir/libfuriosa_smi.so; \
+    cp /usr/lib/$libDir/libgcc_s.so.1   /staging/usr/lib/$libDir/libgcc_s.so.1
+
 FROM gcr.io/distroless/base-debian12:latest
 
 # Copy binary file
 COPY --from=build /tmp/target/release/furiosa-feature-discovery /opt/bin/furiosa-feature-discovery
 
 # Below dynamic libraries are required due to `furiosa-smi` and Rust dependencies.
-COPY --from=build /usr/lib/x86_64-linux-gnu/libfuriosa_smi.so /usr/lib/x86_64-linux-gnu/libfuriosa_smi.so
-COPY --from=build /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
+COPY --from=build /staging/ /
 
 WORKDIR /opt/bin
 CMD ["./furiosa-feature-discovery"]

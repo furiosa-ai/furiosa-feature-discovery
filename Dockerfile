@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=asia-northeast3-docker.pkg.dev/next-gen-infra/furiosa-ai/libfuriosa-kubernetes:v2026.1.1
+ARG BASE_IMAGE=asia-northeast3-docker.pkg.dev/next-gen-infra/furiosa-ai/libfuriosa-kubernetes:38c0ce0-test
 FROM $BASE_IMAGE as build
 
 ARG GITHUB_TOKEN

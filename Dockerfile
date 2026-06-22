@@ -14,7 +14,7 @@ COPY . /tmp
 RUN make build
 
 ARG TARGETARCH
-RUN set -eux; \
+RUN set -e; \
     case "$TARGETARCH" in \
         amd64) libDir='x86_64-linux-gnu' ;; \
         arm64) libDir='aarch64-linux-gnu' ;; \

@@ -25,12 +25,38 @@ RUN set -e; \
     cp /usr/lib/$libDir/libgcc_s.so.1     /staging/usr/lib/$libDir/libgcc_s.so.1
 
 FROM registry.access.redhat.com/ubi9/ubi:9.8
+ARG TARGETARCH
 
-# Copy binary file
+LABEL name="furiosa-feature-discovery" \
+    vendor="FuriosaAI, Inc." \
+    version="2026.1.1" \
+    release="1" \
+    summary="k8s node feature discovery" \
+    description="automatic node labeler for rngd devices" \
+    maintainer="FuriosaAI Cloud Native Team <sw-devops@furiosa.ai>" \
+    io.openshift.tags="npu,furiosa,rngd,ai,accelerator,inference" \
+    io.k8s.display-name="furiosa-feature-discovery" \
+    io.k8s.description="automatic node labeler for rngd devices"
+
+RUN dnf update -y openssl openssl-libs glib2 libcap krb5-libs && dnf clean all
+
 COPY --from=build /tmp/target/release/furiosa-feature-discovery /opt/bin/furiosa-feature-discovery
-
-# Below dynamic libraries are required due to `furiosa-smi` and Rust dependencies.
 COPY --from=build /staging/ /
 
+COPY LICENSE.txt /licenses/LICENSE.txt
+
+RUN set -e; \
+    case "$TARGETARCH" in \
+        amd64) libDir='x86_64-linux-gnu' ;; \
+        arm64) libDir='aarch64-linux-gnu' ;; \
+        *) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;; \
+    esac; \
+    chmod -R 755 /usr/lib/$libDir/; \
+    echo "/usr/lib/$libDir" > /etc/ld.so.conf.d/furiosa.conf; \
+    ldconfig
+
+RUN setcap cap_dac_override=ep /opt/bin/furiosa-feature-discovery && getcap /opt/bin/furiosa-feature-discovery
+
+USER 1001
 WORKDIR /opt/bin
 CMD ["./furiosa-feature-discovery"]

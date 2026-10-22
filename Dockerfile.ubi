@@ -1,0 +1,33 @@
+FROM golang:1.27.2-bookworm AS builder
+
+WORKDIR /workspace
+COPY . .
+
+# Build feature-discovery binary
+RUN CGO_ENABLED=0 go build -o /furiosa-feature-discovery cmd/main.go
+
+FROM registry.access.redhat.com/ubi10/ubi:10.0
+ARG IMAGE_VERSION
+ARG IMAGE_RELEASE=1
+
+LABEL name="furiosa-feature-discovery" \
+    vendor="FuriosaAI, Inc." \
+    version="${IMAGE_VERSION}" \
+    release="${IMAGE_RELEASE}" \
+    summary="Furiosa feature discovery for labeling k8s nodes with FuriosaAI NPU properties" \
+    description="Furiosa feature discovery for labeling k8s nodes with FuriosaAI NPU properties" \
+    maintainer="FuriosaAI Cloud Native Team <sw-devops@furiosa.ai>" \
+    io.openshift.tags="npu,furiosa,rngd,ai,accelerator,inference" \
+    io.k8s.display-name="furiosa-feature-discovery" \
+    io.k8s.description="Furiosa feature discovery for labeling k8s nodes with FuriosaAI NPU properties"
+
+RUN dnf update -y openssl openssl-libs glib2 libcap krb5-libs && dnf clean all
+
+WORKDIR /opt/bin
+
+COPY --from=builder /furiosa-feature-discovery /opt/bin/furiosa-feature-discovery
+
+COPY LICENSE.txt /licenses/LICENSE.txt
+
+USER 1001
+CMD ["./furiosa-feature-discovery"]

@@ -1,8 +1,30 @@
-target
-.idea
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+__debug_bin*
 
+# Test binary, built with `go test -c`
+*.test
 
-#Added by cargo
+# Output of the go coverage tool
+*.out
 
-/target
-!/vendor/**/*
+# Dependency directories
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Others
+furiosa-feature-discovery
